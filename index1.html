@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitForm AI — Intelligent Fitness Coach</title>
+  <link rel="stylesheet" href="src/assets/css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>" />
+</head>
+<body>
+
+<!-- ═══════════ AUTH PAGES ═══════════ -->
+<div id="auth-pages">
+
+  <!-- Login Page -->
+  <div id="login-page" class="auth-page">
+    <div class="auth-bg"></div>
+    <div class="auth-card">
+      <div class="auth-logo">FITFORM</div>
+      <div class="auth-tagline">AI Fitness Intelligence</div>
+      <div class="auth-divider"></div>
+      <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:24px;">Welcome back 👋</h2>
+
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="login-email" class="form-input" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="login-password" class="form-input" placeholder="••••••••" />
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center; padding:13px;" onclick="handleLogin()">
+        Sign In
+      </button>
+      <div class="auth-switch">
+        Don't have an account? <a onclick="showPage('register-page', 'auth-pages')">Sign up</a>
+      </div>
+      <div style="margin-top:16px; text-align:center;">
+        <button class="btn btn-ghost btn-sm" onclick="demoLogin()">⚡ Demo Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Page -->
+  <div id="register-page" class="auth-page" style="display:none;">
+    <div class="auth-bg"></div>
+    <div class="auth-card">
+      <div class="auth-logo">FITFORM</div>
+      <div class="auth-tagline">AI Fitness Intelligence</div>
+      <div class="auth-divider"></div>
+      <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:24px;">Create your account</h2>
+
+      <div class="grid-2" style="gap:12px;">
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Username</label>
+          <input type="text" id="reg-username" class="form-input" placeholder="johndoe" />
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Age</label>
+          <input type="number" id="reg-age" class="form-input" placeholder="25" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label class="form-label">Email</label>
+        <input type="email" id="reg-email" class="form-input" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="reg-password" class="form-input" placeholder="••••••••" />
+      </div>
+      <div class="grid-2" style="gap:12px; margin-bottom:18px;">
+        <div>
+          <label class="form-label">Weight (kg)</label>
+          <input type="number" id="reg-weight" class="form-input" placeholder="70" />
+        </div>
+        <div>
+          <label class="form-label">Height (cm)</label>
+          <input type="number" id="reg-height" class="form-input" placeholder="175" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fitness Goal</label>
+        <select id="reg-goal" class="form-input form-select">
+          <option value="lose_weight">🔥 Lose Weight</option>
+          <option value="build_muscle">💪 Build Muscle</option>
+          <option value="maintain">⚖️ Maintain</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center; padding:13px;" onclick="handleRegister()">
+        Create Account
+      </button>
+      <div class="auth-switch">
+        Already have an account? <a onclick="showPage('login-page', 'auth-pages')">Sign in</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════ MAIN APP ═══════════ -->
+<div id="app" class="app-shell" style="display:none;">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <h1>FITFORM</h1>
+      <span>AI Fitness Coach</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item active" onclick="switchPage('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="switchPage('pose')">
+        <span class="nav-icon">🎥</span> Pose Detection
+        <span class="nav-badge">AI</span>
+      </div>
+      <div class="nav-section-label" style="margin-top:12px;">Training</div>
+      <div class="nav-item" onclick="switchPage('exercises')">
+        <span class="nav-icon">💪</span> Exercise Library
+      </div>
+      <div class="nav-item" onclick="switchPage('history')">
+        <span class="nav-icon">📈</span> My History
+      </div>
+      <div class="nav-section-label" style="margin-top:12px;">Wellness</div>
+      <div class="nav-item" onclick="switchPage('diet')">
+        <span class="nav-icon">🥗</span> Diet Planner
+      </div>
+      <div class="nav-item" onclick="switchPage('chatbot')">
+        <span class="nav-icon">🤖</span> AI Coach
+      </div>
+      <div class="nav-section-label" style="margin-top:12px;">Account</div>
+      <div class="nav-item" onclick="switchPage('profile')">
+        <span class="nav-icon">👤</span> Profile
+      </div>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar-initials">FF</div>
+      <div class="user-info">
+        <div class="name" id="sidebar-username">Loading...</div>
+        <div class="goal" id="sidebar-goal">—</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">DASHBOARD</div>
+        <div class="topbar-sub" id="topbar-date"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="logout()">Sign Out</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="page-dashboard" class="page active">
+        <div class="grid-4" style="margin-bottom:28px;" id="stat-cards">
+          <div class="card stat-card">
+            <div class="stat-label">Total Sessions</div>
+            <div class="stat-value" id="stat-sessions">0</div>
+            <div class="stat-delta up">↑ This week</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Calories Burned</div>
+            <div class="stat-value" id="stat-calories">0</div>
+            <div class="stat-unit" style="display:inline;">kcal</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Avg Form Score</div>
+            <div class="stat-value" style="color:var(--blue);" id="stat-form">—</div>
+            <div class="stat-unit" style="display:inline;">%</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Total Reps</div>
+            <div class="stat-value" style="color:var(--gold);" id="stat-reps">0</div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:28px;">
+          <!-- Activity Chart -->
+          <div class="card">
+            <div class="section-header">
+              <div>
+                <div class="section-title">WEEKLY ACTIVITY</div>
+                <div class="section-sub">Sessions per day</div>
+              </div>
+            </div>
+            <div class="chart-bar-group" id="activity-chart">
+              <!-- Generated by JS -->
+            </div>
+          </div>
+
+          <!-- Suggested Exercises -->
+          <div class="card">
+            <div class="section-header">
+              <div class="section-title">TODAY'S PLAN</div>
+              <button class="btn btn-ghost btn-sm" onclick="loadSuggested()">↻ Refresh</button>
+            </div>
+            <div id="suggested-list">
+              <div style="color:var(--text-muted); font-size:0.85rem;">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Workouts -->
+        <div class="card">
+          <div class="section-header">
+            <div class="section-title">RECENT WORKOUTS</div>
+          </div>
+          <div id="recent-sessions" style="display:flex; flex-direction:column; gap:10px;">
+            <div style="color:var(--text-muted); font-size:0.85rem;">No sessions yet. Start working out! 🚀</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── POSE DETECTION ── -->
+      <div id="page-pose" class="page">
+        <div class="grid-2" style="gap:24px;">
+          <div>
+            <!-- Video Feed -->
+            <div class="pose-arena" id="pose-arena">
+              <video id="pose-video" class="pose-video" autoplay muted playsinline></video>
+              <canvas id="pose-canvas" class="pose-canvas"></canvas>
+              <div class="pose-overlay">
+                <div class="pose-hud">
+                  <div class="hud-chip" id="hud-status">⚫ Camera Off</div>
+                  <div class="hud-chip" id="hud-angle" style="display:none;">📐 Angle: —°</div>
+                </div>
+                <div class="rep-counter">
+                  <div class="rep-number" id="rep-counter">0</div>
+                  <div class="rep-label">Reps</div>
+                </div>
+                <div class="feedback-bar">
+                  <div class="feedback-text good" id="feedback-text">Start camera to begin</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Camera Controls -->
+            <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+              <button class="btn btn-primary" id="start-camera-btn" onclick="startCamera()">
+                🎥 Start Camera
+              </button>
+              <button class="btn btn-ghost" onclick="stopCamera()" style="display:none;" id="stop-camera-btn">
+                ⏹ Stop
+              </button>
+              <button class="btn btn-ghost" onclick="resetReps()">
+                🔄 Reset Reps
+              </button>
+              <button class="btn btn-primary" onclick="saveSession()" style="margin-left:auto; background:var(--blue);">
+                💾 Save Session
+              </button>
+            </div>
+          </div>
+
+          <!-- Controls Panel -->
+          <div>
+            <!-- Exercise Selector -->
+            <div class="card" style="margin-bottom:16px;">
+              <div class="section-title" style="margin-bottom:14px;">EXERCISE SELECT</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;" id="exercise-selector">
+                <button class="btn btn-primary" onclick="selectExercise('squat')">🏋️ Squat</button>
+                <button class="btn btn-ghost" onclick="selectExercise('pushup')">💪 Push-Up</button>
+                <button class="btn btn-ghost" onclick="selectExercise('bicep_curl')">🦾 Bicep Curl</button>
+                <button class="btn btn-ghost" onclick="selectExercise('plank')">🧘 Plank</button>
+              </div>
+              <div style="margin-top:12px; font-size:0.8rem; color:var(--text-muted);">
+                Currently: <span style="color:var(--neon); font-weight:700;" id="selected-exercise-label">Squat</span>
+              </div>
+            </div>
+
+            <!-- Form Score -->
+            <div class="card card-neon" style="margin-bottom:16px; text-align:center;">
+              <div class="section-title" style="margin-bottom:16px;">FORM SCORE</div>
+              <svg width="140" height="140" viewBox="0 0 140 140" style="margin:0 auto; display:block;">
+                <circle cx="70" cy="70" r="58" fill="none" stroke="var(--bg-elevated)" stroke-width="10"/>
+                <circle cx="70" cy="70" r="58" fill="none" stroke="var(--neon)" stroke-width="10"
+                  stroke-linecap="round"
+                  stroke-dasharray="364.4"
+                  stroke-dashoffset="364.4"
+                  transform="rotate(-90 70 70)"
+                  id="form-score-arc"
+                  style="transition: stroke-dashoffset 0.5s ease; filter: drop-shadow(0 0 8px var(--neon));"/>
+                <text x="70" y="64" text-anchor="middle" fill="var(--text-primary)" font-family="'Bebas Neue'" font-size="30" id="form-score-text">100</text>
+                <text x="70" y="82" text-anchor="middle" fill="var(--text-muted)" font-family="DM Sans" font-size="10">FORM SCORE</text>
+              </svg>
+            </div>
+
+            <!-- Tips -->
+            <div class="card">
+              <div class="section-title" style="margin-bottom:12px;">💡 PRO TIPS</div>
+              <div id="exercise-tips" style="display:flex; flex-direction:column; gap:8px;">
+                <div style="font-size:0.85rem; color:var(--text-secondary);">• Keep your back straight throughout</div>
+                <div style="font-size:0.85rem; color:var(--text-secondary);">• Breathe out on exertion</div>
+                <div style="font-size:0.85rem; color:var(--text-secondary);">• Control the movement both ways</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── EXERCISE LIBRARY ── -->
+      <div id="page-exercises" class="page">
+        <div class="section-header" style="margin-bottom:20px;">
+          <div>
+            <div class="section-title">EXERCISE LIBRARY</div>
+            <div class="section-sub">Tap any exercise to view details. 🤖 = AI form tracking available</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <select class="form-input form-select" style="width:auto;" id="category-filter" onchange="filterExercises()">
+              <option value="">All Categories</option>
+              <option value="Legs">Legs</option>
+              <option value="Chest">Chest</option>
+              <option value="Back">Back</option>
+              <option value="Arms">Arms</option>
+              <option value="Core">Core</option>
+              <option value="Shoulders">Shoulders</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-auto" id="exercises-grid">
+          <div style="color:var(--text-muted);">Loading exercises...</div>
+        </div>
+      </div>
+
+      <!-- ── HISTORY ── -->
+      <div id="page-history" class="page">
+        <div class="section-title" style="margin-bottom:20px;">MY WORKOUT HISTORY</div>
+        <div id="history-list" style="display:flex; flex-direction:column; gap:12px;">
+          <div style="color:var(--text-muted); font-size:0.85rem;">No workouts found. Start training!</div>
+        </div>
+      </div>
+
+      <!-- ── DIET PLANNER ── -->
+      <div id="page-diet" class="page">
+        <div class="grid-2" style="gap:24px;">
+          <!-- Macros Overview -->
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="section-header">
+                <div class="section-title">MACRO TARGETS</div>
+                <button class="btn btn-primary btn-sm" onclick="generateDiet()">⚡ Generate Plan</button>
+              </div>
+              <div class="macro-ring">
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="var(--bg-elevated)" stroke-width="14"/>
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="var(--neon)" stroke-width="14"
+                    stroke-dasharray="314" stroke-dashoffset="100"
+                    transform="rotate(-90 60 60)" id="macro-protein-arc"/>
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="var(--blue)" stroke-width="14"
+                    stroke-dasharray="314" stroke-dashoffset="180"
+                    transform="rotate(130 60 60)" id="macro-carb-arc"/>
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gold)" stroke-width="14"
+                    stroke-dasharray="314" stroke-dashoffset="240"
+                    transform="rotate(220 60 60)" id="macro-fat-arc"/>
+                </svg>
+                <div class="macro-legend">
+                  <div class="macro-item">
+                    <div class="macro-dot" style="background:var(--neon);"></div>
+                    <div class="macro-name">Protein</div>
+                    <div class="macro-val" id="macro-protein">—g</div>
+                  </div>
+                  <div class="macro-item">
+                    <div class="macro-dot" style="background:var(--blue);"></div>
+                    <div class="macro-name">Carbs</div>
+                    <div class="macro-val" id="macro-carbs">—g</div>
+                  </div>
+                  <div class="macro-item">
+                    <div class="macro-dot" style="background:var(--gold);"></div>
+                    <div class="macro-name">Fats</div>
+                    <div class="macro-val" id="macro-fats">—g</div>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.8rem; color:var(--text-muted);">Daily Target</span>
+                <span style="font-family:var(--font-display); font-size:1.8rem; color:var(--text-primary);" id="daily-calories">— kcal</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-title" style="margin-bottom:12px;">HYDRATION GOAL</div>
+              <div style="display:flex; align-items:center; gap:14px;">
+                <div style="font-family:var(--font-display); font-size:3rem; color:var(--blue);">2.5L</div>
+                <div>
+                  <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:8px;">Daily water intake</div>
+                  <div class="progress-bar" style="width:180px;">
+                    <div class="progress-fill" style="width:60%; background: linear-gradient(90deg, var(--blue), #7ec8ff);"></div>
+                  </div>
+                  <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">1.5L / 2.5L</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Meal Plan -->
+          <div>
+            <div class="section-title" style="margin-bottom:16px;">MEAL PLAN</div>
+            <div id="meal-plan">
+              <div style="color:var(--text-muted); font-size:0.85rem;">Generate a plan to see your meals →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AI CHATBOT ── -->
+      <div id="page-chatbot" class="page">
+        <div class="grid-2" style="gap:24px; align-items:start;">
+          <!-- Chat Window -->
+          <div class="chat-window">
+            <div class="chat-header">
+              <div class="chat-bot-avatar">🤖</div>
+              <div>
+                <div style="font-weight:700; font-size:0.9rem;">FitForm Coach</div>
+                <div class="chat-status">
+                  <div class="chat-status-dot"></div>
+                  AI Online
+                </div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="clearChat()">Clear</button>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+              <div class="message assistant">
+                <div class="chat-bot-avatar" style="width:28px;height:28px;font-size:0.8rem;flex-shrink:0;">🤖</div>
+                <div class="message-bubble">
+                  Hey! I'm your AI fitness coach. Ask me anything about exercises, nutrition, recovery, or form tips! 💪
+                </div>
+              </div>
+            </div>
+            <div class="chat-input-area">
+              <input type="text" id="chat-input" class="chat-input" placeholder="Ask your coach..."
+                onkeydown="if(event.key==='Enter') sendChatMessage()" />
+              <button class="btn btn-primary" onclick="sendChatMessage()">Send →</button>
+            </div>
+          </div>
+
+          <!-- Quick Questions -->
+          <div>
+            <div class="section-title" style="margin-bottom:16px;">QUICK QUESTIONS</div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <button class="btn btn-ghost" style="justify-content:flex-start; text-align:left;" onclick="askQuick('How do I do a proper squat?')">
+                🏋️ How do I do a proper squat?
+              </button>
+              <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="askQuick('How much protein should I eat?')">
+                🥩 How much protein should I eat?
+              </button>
+              <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="askQuick('What is the best cardio for fat loss?')">
+                🏃 Best cardio for fat loss?
+              </button>
+              <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="askQuick('How important is rest and recovery?')">
+                😴 Importance of rest & recovery?
+              </button>
+              <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="askQuick('How do I warm up properly?')">
+                🔥 How do I warm up properly?
+              </button>
+              <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="askQuick('What should my diet look like?')">
+                🥗 What should my diet look like?
+              </button>
+            </div>
+
+            <div class="card" style="margin-top:20px; border-color:var(--border-neon);">
+              <div style="font-size:0.75rem; color:var(--neon); font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;">💡 Pro Tip</div>
+              <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+                Ask me about specific exercises, your form score, or what to eat before/after training for personalized advice!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PROFILE ── -->
+      <div id="page-profile" class="page">
+        <div class="grid-2" style="gap:24px; align-items:start; max-width:800px;">
+          <div class="card">
+            <div class="section-title" style="margin-bottom:20px;">PERSONAL INFO</div>
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input type="text" id="prof-username" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Age</label>
+              <input type="number" id="prof-age" class="form-input" />
+            </div>
+            <div class="grid-2" style="gap:12px; margin-bottom:18px;">
+              <div>
+                <label class="form-label">Weight (kg)</label>
+                <input type="number" id="prof-weight" class="form-input" />
+              </div>
+              <div>
+                <label class="form-label">Height (cm)</label>
+                <input type="number" id="prof-height" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fitness Goal</label>
+              <select id="prof-goal" class="form-input form-select">
+                <option value="lose_weight">🔥 Lose Weight</option>
+                <option value="build_muscle">💪 Build Muscle</option>
+                <option value="maintain">⚖️ Maintain</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+          </div>
+
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="section-title" style="margin-bottom:16px;">BODY METRICS</div>
+              <div id="bmi-display" style="text-align:center; padding:8px 0;">
+                <div style="font-size:0.72rem; color:var(--text-muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px;">BMI</div>
+                <div style="font-family:var(--font-display); font-size:3.5rem; color:var(--neon);" id="bmi-value">—</div>
+                <div style="font-size:0.8rem; color:var(--text-secondary);" id="bmi-label">Update your metrics</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title" style="margin-bottom:12px;">ACCOUNT</div>
+              <button class="btn btn-danger" style="width:100%; justify-content:center;" onclick="logout()">
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="src/components/app.js"></script>
+</body>
+</html>

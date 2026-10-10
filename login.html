@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitForm AI — Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --neon:       #00ff88;
+      --neon-dim:   #00cc6a;
+      --neon-glow:  rgba(0,255,136,0.25);
+      --accent:     #ff3c5f;
+      --blue:       #3c9eff;
+      --bg-base:    #080b0f;
+      --bg-card:    #0d1117;
+      --bg-elevated:#141c24;
+      --bg-hover:   #1a2333;
+      --border:     rgba(255,255,255,0.07);
+      --border-neon:rgba(0,255,136,0.3);
+      --text-primary:  #f0f4f8;
+      --text-secondary:#8a9bb0;
+      --text-muted:    #4a5568;
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+      --radius:  12px;
+      --radius-lg: 20px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+
+    /* ── Background ───────────────────────────────────────────────── */
+    .auth-scene {
+      position: fixed; inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-bg {
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% 30%, rgba(0,255,136,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 70%, rgba(60,158,255,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(0,255,136,0.03) 0%, transparent 50%),
+        var(--bg-base);
+      z-index: 0;
+    }
+
+    /* Animated floating particles */
+    .particle {
+      position: fixed;
+      border-radius: 50%;
+      background: var(--neon);
+      opacity: 0.15;
+      animation: float linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes float {
+      0%   { transform: translateY(110vh) rotate(0deg);   opacity: 0; }
+      10%  { opacity: 0.15; }
+      90%  { opacity: 0.15; }
+      100% { transform: translateY(-10vh)  rotate(720deg); opacity: 0; }
+    }
+
+    /* ── Split Layout ─────────────────────────────────────────────── */
+    .auth-container {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      width: min(900px, 95vw);
+      min-height: 560px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
+    }
+
+    /* Left panel — branding */
+    .auth-brand {
+      flex: 1;
+      background: linear-gradient(145deg, #0d1520 0%, #091018 100%);
+      border-right: 1px solid var(--border);
+      padding: 56px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-brand::before {
+      content: '';
+      position: absolute;
+      top: -80px; left: -80px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(0,255,136,0.12) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .auth-brand::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; right: -60px;
+      width: 250px; height: 250px;
+      background: radial-gradient(circle, rgba(60,158,255,0.1) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .brand-logo {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      color: var(--neon);
+      text-shadow: 0 0 30px var(--neon-glow);
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    .brand-tagline {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .brand-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .brand-features li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .brand-features li .icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: rgba(0,255,136,0.1);
+      border: 1px solid var(--border-neon);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .brand-footer {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Right panel — form */
+    .auth-form-panel {
+      width: 400px;
+      background: var(--bg-card);
+      padding: 52px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .auth-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .auth-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    /* Tabs (Login / Register) */
+    .auth-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-elevated);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .auth-tab.active {
+      background: var(--neon);
+      color: #080b0f;
+    }
+
+    /* Form elements */
+    .form-group { margin-bottom: 16px; }
+
+    .form-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--border-neon);
+      box-shadow: 0 0 0 3px rgba(0,255,136,0.1);
+    }
+
+    .form-input::placeholder { color: var(--text-muted); }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a9bb0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+
+    .form-select:focus {
+      border-color: var(--border-neon);
+      box-shadow: 0 0 0 3px rgba(0,255,136,0.1);
+    }
+
+    .form-select option { background: var(--bg-elevated); }
+
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      margin-top: 8px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--neon);
+      color: #080b0f;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-submit:hover {
+      background: var(--neon-dim);
+      box-shadow: 0 0 20px var(--neon-glow);
+      transform: translateY(-1px);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-submit .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(8,11,15,0.3);
+      border-top-color: #080b0f;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .auth-error {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(255,60,95,0.1);
+      border: 1px solid rgba(255,60,95,0.3);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      color: #ff8099;
+    }
+
+    .auth-error.show { display: block; }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Form panels */
+    .form-panel { display: none; }
+    .form-panel.active { display: block; }
+
+    /* ── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      .auth-brand { display: none; }
+      .auth-container { width: 95vw; min-height: auto; }
+      .auth-form-panel { width: 100%; padding: 40px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="auth-bg"></div>
+
+<!-- Floating particles -->
+<script>
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 4 + 2;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random() * 100}%;
+      animation-duration:${8 + Math.random() * 12}s;
+      animation-delay:${-Math.random() * 15}s;
+    `;
+    document.body.appendChild(p);
+  }
+</script>
+
+<!-- Main layout -->
+<div class="auth-scene">
+  <div class="auth-container">
+
+    <!-- Left: Brand panel -->
+    <div class="auth-brand">
+      <div>
+        <div class="brand-logo">FITFORM</div>
+        <div class="brand-tagline">AI Fitness Intelligence</div>
+      </div>
+
+      <ul class="brand-features">
+        <li>
+          <span class="icon">🤖</span>
+          <span>AI-powered pose detection & real-time form feedback</span>
+        </li>
+        <li>
+          <span class="icon">🎯</span>
+          <span>Personalized workout plans based on your goals</span>
+        </li>
+        <li>
+          <span class="icon">🥗</span>
+          <span>Smart nutrition & macro tracking tailored to you</span>
+        </li>
+        <li>
+          <span class="icon">📊</span>
+          <span>Track progress with detailed analytics and BMI insights</span>
+        </li>
+      </ul>
+
+      <div class="brand-footer">© 2026 FitForm AI — All rights reserved</div>
+    </div>
+
+    <!-- Right: Form panel -->
+    <div class="auth-form-panel">
+      <div class="auth-title" id="form-title">Welcome back 👋</div>
+      <div class="auth-subtitle" id="form-subtitle">Sign in to your account</div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- ── LOGIN FORM ── -->
+      <div class="form-panel active" id="panel-login">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="login-email" class="form-input" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="login-password" class="form-input" placeholder="••••••••"
+                 onkeydown="if(event.key==='Enter') doLogin()" />
+        </div>
+        <button class="btn-submit" id="btn-login" onclick="doLogin()">
+          <span>Sign In</span>
+        </button>
+        <div class="auth-error" id="login-error"></div>
+      </div>
+
+      <!-- ── REGISTER FORM ── -->
+      <div class="form-panel" id="panel-register">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Username</label>
+            <input type="text" id="reg-username" class="form-input" placeholder="John Doe" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Age</label>
+            <input type="number" id="reg-age" class="form-input" placeholder="25" min="10" max="99" />
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:16px;">
+          <label class="form-label">Email</label>
+          <input type="email" id="reg-email" class="form-input" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="reg-password" class="form-input" placeholder="Minimum 6 characters"
+                 onkeydown="if(event.key==='Enter') doRegister()" />
+        </div>
+        <button class="btn-submit" id="btn-register" onclick="doRegister()">
+          <span>Create Account</span>
+        </button>
+        <div class="auth-error" id="register-error"></div>
+      </div>
+
+    </div><!-- /auth-form-panel -->
+  </div><!-- /auth-container -->
+</div><!-- /auth-scene -->
+
+<script>
+  const API = 'http://localhost:3000/api';
+
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+
+    if (tab === 'login') {
+      document.getElementById('form-title').textContent    = 'Welcome back 👋';
+      document.getElementById('form-subtitle').textContent = 'Sign in to your account';
+    } else {
+      document.getElementById('form-title').textContent    = 'Create account ✨';
+      document.getElementById('form-subtitle').textContent = 'Start your fitness journey today';
+    }
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (loading) {
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div>';
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = btnId === 'btn-login' ? '<span>Sign In</span>' : '<span>Create Account</span>';
+    }
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 5000);
+  }
+
+  async function doLogin() {
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    if (!email || !password) {
+      showError('login-error', 'Please fill in both fields.');
+      return;
+    }
+
+    setLoading('btn-login', true);
+    try {
+      const res  = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+
+      localStorage.setItem('fitform_token', data.token);
+      localStorage.setItem('fitform_user',  JSON.stringify(data.user));
+
+      // Redirect: if onboarding not done → onboarding, else → dashboard
+      window.location.href = data.onboarding_done ? '/dashboard' : '/onboarding';
+    } catch (err) {
+      showError('login-error', err.message);
+      setLoading('btn-login', false);
+    }
+  }
+
+  async function doRegister() {
+    const username = document.getElementById('reg-username').value.trim();
+    const email    = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const age      = document.getElementById('reg-age').value;
+
+    if (!username || !email || !password) {
+      showError('register-error', 'Username, email and password are required.');
+      return;
+    }
+    if (password.length < 6) {
+      showError('register-error', 'Password must be at least 6 characters.');
+      return;
+    }
+
+    setLoading('btn-register', true);
+    try {
+      const res  = await fetch(`${API}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password, age: age ? parseInt(age) : null }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+      localStorage.setItem('fitform_token', data.token);
+      localStorage.setItem('fitform_user',  JSON.stringify(data.user));
+
+      // New users always go to onboarding
+      window.location.href = '/onboarding';
+    } catch (err) {
+      showError('register-error', err.message);
+      setLoading('btn-register', false);
+    }
+  }
+
+  // Redirect if already logged in
+  (function() {
+    const token = localStorage.getItem('fitform_token');
+    const user  = localStorage.getItem('fitform_user');
+    if (token && user) {
+      try {
+        const u = JSON.parse(user);
+        window.location.href = u.onboarding_done ? '/dashboard' : '/onboarding';
+      } catch(e) {}
+    }
+  })();
+</script>
+</body>
+</html>

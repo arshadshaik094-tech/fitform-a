@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Meet your coach · FitForm AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/src/assets/css/fitform.css">
+<style>
+:root {
+  --lime:#C8F135; --lime2:#a8d420; --lime-glow:rgba(200,241,53,0.22);
+  --navy:#0a0e14; --navy2:#111820; --navy3:#182030; --steel:#1e2a38;
+  --border:rgba(255,255,255,0.07); --muted:rgba(255,255,255,0.38);
+  --sub:rgba(255,255,255,0.6); --white:#f0f4f0; --red:#ff5a5a;
+  --ff-display:'Bebas Neue',sans-serif; --ff-cond:'Barlow Condensed',sans-serif; --ff-body:'Barlow',sans-serif;
+  --bot-w:170px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--navy);color:var(--white);font-family:var(--ff-body);overflow:hidden}
+
+/* custom cursor */
+@media (hover:hover) and (pointer:fine){
+  body,a,button,input,label,select{cursor:none}
+}
+#cursorDot,#cursorRing{position:fixed;border-radius:50%;pointer-events:none;z-index:9999;top:0;left:0}
+#cursorDot{width:8px;height:8px;background:var(--lime);transform:translate(-50%,-50%)}
+#cursorRing{width:36px;height:36px;border:1.5px solid rgba(200,241,53,.5);transform:translate(-50%,-50%);transition:width .2s,height .2s,border-color .2s}
+#cursorRing.expand{width:56px;height:56px;border-color:var(--lime)}
+@media (hover:none),(pointer:coarse){#cursorDot,#cursorRing{display:none}}
+
+body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.6;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E")}
+.grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(200,241,53,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(200,241,53,.04) 1px,transparent 1px);background-size:60px 60px;animation:gridShift 20s linear infinite}
+@keyframes gridShift{to{background-position:60px 60px}}
+.glow{position:fixed;left:50%;top:50%;width:1000px;height:1000px;margin:-500px 0 0 -500px;border-radius:50%;background:radial-gradient(circle,rgba(200,241,53,.07),transparent 65%);pointer-events:none;z-index:0}
+
+/* top bar */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:18px 40px}
+.logo{font-family:var(--ff-display);font-size:1.6rem;letter-spacing:3px;display:flex;align-items:center;gap:8px;color:var(--white);text-decoration:none}
+.logo span{color:var(--lime)}
+.logo-icon{width:32px;height:32px;background:var(--lime);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.tools{display:flex;gap:10px}
+.tool{display:inline-flex;align-items:center;gap:8px;background:rgba(17,24,32,.8);border:1px solid var(--border);color:var(--sub);border-radius:99px;padding:8px 16px;font:600 .8rem var(--ff-cond);letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:color .2s,border-color .2s}
+.tool:hover{color:var(--lime);border-color:rgba(200,241,53,.5)}
+.tool svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tool:focus-visible,.chip:focus-visible,.btn:focus-visible,.unit:focus-visible,.back:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+
+/* stage + box */
+.stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:84px 20px 30px;z-index:1}
+.box{position:relative;z-index:10;width:min(620px,92vw);background:rgba(17,24,32,.88);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:12px;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 60px rgba(200,241,53,.05)}
+.box::before,.box::after{content:'';position:absolute;width:26px;height:26px;border:2px solid var(--lime);pointer-events:none}
+.box::before{top:-1px;left:-1px;border-right:0;border-bottom:0;border-top-left-radius:12px}
+.box::after{bottom:-1px;right:-1px;border-left:0;border-top:0;border-bottom-right-radius:12px}
+.box-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 26px 14px;border-bottom:1px solid var(--border)}
+.who{display:flex;align-items:center;gap:10px;font:700 1.05rem var(--ff-cond);letter-spacing:1.5px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 10px var(--lime)}
+.dot.talk{animation:pulse .8s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.state{font:400 .85rem var(--ff-body);color:var(--muted);letter-spacing:0}
+.right{display:flex;align-items:center;gap:14px}
+.count{font:600 .8rem var(--ff-cond);letter-spacing:1.5px;color:var(--sub);text-transform:uppercase}
+.back{background:none;border:0;color:var(--sub);font:600 .8rem var(--ff-cond);letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;padding:4px 6px;border-radius:4px}
+.back:hover{color:var(--lime)}
+.back[hidden]{display:none}
+.bar{height:2px;background:rgba(255,255,255,.06)}
+.bar i{display:block;height:100%;width:0;background:var(--lime);box-shadow:0 0 10px var(--lime);transition:width .5s ease}
+
+.text{padding:30px 30px 8px;min-height:150px}
+.line{font:400 clamp(1.15rem,2.1vw,1.42rem)/1.55 var(--ff-body);color:var(--white);max-width:60ch}
+.line + .line{margin-top:14px}
+.line .rest{visibility:hidden}
+.caret{display:inline-block;width:2px;height:1.1em;margin-left:2px;vertical-align:-.15em;background:var(--lime);animation:caret 1s steps(2) infinite}
+@keyframes caret{50%{opacity:0}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+.answer{padding:14px 30px 28px;min-height:84px}
+.answer.enter{animation:in .3s ease both}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+.field{display:flex;align-items:center;background:var(--navy);border:1px solid rgba(255,255,255,.14);border-radius:6px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.field:focus-within{border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-glow)}
+.field input{background:none;border:0;color:var(--white);font:600 1.15rem var(--ff-body);padding:12px 14px;width:120px;outline:none;-moz-appearance:textfield}
+.field input::-webkit-outer-spin-button,.field input::-webkit-inner-spin-button{-webkit-appearance:none}
+.field input.wide{width:min(340px,100%)}
+.field .suffix{padding:0 14px 0 0;color:var(--muted);font:600 .9rem var(--ff-cond);letter-spacing:1px}
+.units{display:flex;border:1px solid rgba(255,255,255,.14);border-radius:6px;overflow:hidden}
+.unit{background:none;border:0;color:var(--sub);font:700 .85rem var(--ff-cond);letter-spacing:1.5px;text-transform:uppercase;padding:0 16px;cursor:pointer}
+.unit[aria-pressed=true]{background:rgba(200,241,53,.14);color:var(--lime)}
+.btn{background:var(--lime);color:var(--navy);border:0;border-radius:4px;padding:0 28px;min-height:48px;font:700 .95rem var(--ff-cond);letter-spacing:2px;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;transition:background .2s,box-shadow .2s}
+.btn:hover{background:var(--lime2);box-shadow:0 0 24px var(--lime-glow)}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);color:var(--white);border-radius:6px;padding:12px 18px;font:600 1rem var(--ff-body);cursor:pointer;transition:border-color .2s,background .2s,color .2s}
+.chip:hover{border-color:var(--lime);color:var(--lime)}
+.chip[aria-pressed=true]{background:var(--lime);border-color:var(--lime);color:var(--navy)}
+.multi-extra{margin:14px 0}
+.err{color:var(--red);font-size:.88rem;margin-top:10px;min-height:1.2em}
+.note{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:40;max-width:92vw;background:rgba(17,24,32,.95);border:1px solid rgba(255,90,90,.4);color:#ffb3b3;border-radius:8px;padding:10px 16px;font-size:.85rem;display:none}
+.note.show{display:block}
+
+/* bot */
+.bot{position:fixed;left:0;top:0;width:var(--bot-w);z-index:20;pointer-events:none;will-change:transform;opacity:0;transition:opacity .8s;filter:drop-shadow(0 18px 26px rgba(200,241,53,.14))}
+.bot.ready{opacity:1}
+.bot svg{display:block;width:100%;height:auto;overflow:visible}
+
+@media (max-width:860px){
+  :root{--bot-w:118px}
+  .topbar{padding:14px 18px}
+  .tool span{display:none}
+  .tool{padding:9px 11px}
+  .stage{align-items:flex-end;padding:0 12px 16px}
+  .text{padding:22px 20px 6px;min-height:120px}
+  .answer{padding:12px 20px 22px}
+  .box-head{padding:14px 20px 12px}
+}
+@media (max-height:720px) and (min-width:861px){:root{--bot-w:132px}}
+@media (prefers-reduced-motion:reduce){.grid{animation:none}.answer.enter{animation:none}.caret{animation:none}}
+</style>
+</head>
+<body>
+<div class="grid"></div><div class="glow"></div>
+
+<!-- Custom cursor -->
+<div id="cursorDot" class="cursor-dot"></div>
+<div id="cursorRing" class="cursor-ring"></div>
+
+<header class="topbar">
+  <a href="/" class="logo"><div class="logo-icon">💪</div>FitForm <span>AI</span></a>
+  <div class="tools">
+    <button class="tool" id="skipBtn" type="button" title="Stop talking and show the full text">
+      <svg viewBox="0 0 24 24"><path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/></svg><span>Skip voice</span>
+    </button>
+    <button class="tool" id="muteBtn" type="button" aria-pressed="false" title="Turn the voice on or off">
+      <svg viewBox="0 0 24 24" id="muteIcon"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M18.5 5.5a9 9 0 010 13"/></svg><span id="muteLabel">Voice on</span>
+    </button>
+  </div>
+</header>
+
+<!-- the bot -->
+<div class="bot" id="bot" aria-hidden="true">
+<svg viewBox="0 0 240 290" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gBody" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#dde5ec"/><stop offset="1" stop-color="#a3afbc"/></linearGradient>
+    <linearGradient id="gVisor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f2e42"/><stop offset="1" stop-color="#070b11"/></linearGradient>
+    <linearGradient id="gMetal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b485b"/><stop offset="1" stop-color="#121a26"/></linearGradient>
+    <radialGradient id="gFlame" cx=".5" cy=".2" r=".8"><stop offset="0" stop-color="#f4ffb8"/><stop offset=".35" stop-color="#C8F135"/><stop offset="1" stop-color="#C8F135" stop-opacity="0"/></radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+
+  <!-- thruster flame -->
+  <ellipse cx="120" cy="256" rx="34" ry="9" fill="#C8F135" opacity=".28" filter="url(#soft)"/>
+  <g id="flame">
+    <ellipse cx="120" cy="272" rx="15" ry="24" fill="url(#gFlame)"/>
+    <ellipse cx="120" cy="262" rx="7" ry="12" fill="#f4ffb8" opacity=".85"/>
+  </g>
+
+  <!-- left arm (screen left) -->
+  <g id="armL">
+    <rect x="52" y="138" width="20" height="46" rx="10" fill="url(#gBody)" stroke="#94a1af" stroke-width=".8"/>
+    <circle cx="62" cy="184" r="9" fill="url(#gMetal)"/>
+    <g id="foreL">
+      <rect x="53" y="180" width="18" height="42" rx="9" fill="url(#gBody)" stroke="#94a1af" stroke-width=".8"/>
+      <g id="handL">
+        <rect x="51" y="231" width="7" height="16" rx="3.5" fill="url(#gBody)" stroke="#94a1af" stroke-width=".7"/>
+        <rect x="58.5" y="233" width="7" height="17" rx="3.5" fill="url(#gBody)" stroke="#94a1af" stroke-width=".7"/>
+        <rect x="66" y="231" width="7" height="15" rx="3.5" fill="url(#gBody)" stroke="#94a1af" stroke-width=".7"/>
+        <ellipse cx="75" cy="228" rx="4.5" ry="8" transform="rotate(-18 75 228)" fill="url(#gBody)" stroke="#94a1af" stroke-width=".7"/>
+        <ellipse cx="62" cy="229" rx="12" ry="11" fill="url(#gBody)" stroke="#94a1af" stroke-width=".8"/>
+        <rect x="54" y="214" width="16" height="5" rx="2.5" fill="#C8F135"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- right arm (screen right) -->
+  <g id="armR">
+    <rect x="168" y="138" width="20" height="46" rx="10" fill="url(#gBody)" stroke="#94a1af" stroke-width=".8"/>
+    <circle cx="178" cy="184" r="9" fill="url(#gMetal)"/>
+    <g id="foreR">
+      <rect x="169" y="180" width="18" height="42" rx="9" fill="url(#gBody)" stroke="#94a1af" stroke-width=".8"/>
+      <g id="handR">
+        <rect x="167" y="231" width="7" height="15" rx="3.5" fill="url(#gBody)" stroke="#94a1af" stroke-width=".7"/>
+        <rect x="174.5" y="233" width="7" height="17" rx="3.5" fill="url(#gBody)" stroke="#94a1af" stroke-width=".7"/>
+        <rect x="182" y="231" width="7" height="16" rx="3.5" fill="url(#gBody)" stroke="#94a1af" stroke-width=".7"/>
+        <ellipse cx="165" cy="228" rx="4.5" ry="8" transform="rotate(18 165 228)" fill="url(#gBody)" stroke="#94a1af" stroke-width=".7"/>
+        <ellipse cx="178" cy="229" rx="12" ry="11" fill="url(#gBody)" stroke="#94a1af" stroke-width=".8"/>
+        <rect x="170" y="214" width="16" height="5" rx="2.5" fill="#C8F135"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- body -->
+  <path d="M68 132 C68 124 84 120 120 120 C156 120 172 124 172 132 L170 188 C168 220 148 240 120 246 C92 240 72 220 70 188 Z" fill="url(#gBody)" stroke="#94a1af" stroke-width="1"/>
+  <path d="M78 134 C80 128 94 126 106 126 C96 150 92 180 94 214 C82 204 76 186 76 170 Z" fill="#fff" opacity=".35"/>
+  <path d="M71 202 C95 214 145 214 169 202" fill="none" stroke="#C8F135" stroke-width="2.2" opacity=".75"/>
+  <rect x="94" y="146" width="52" height="38" rx="11" fill="url(#gVisor)" stroke="#2e3d50" stroke-width="1"/>
+  <polyline id="beat" points="101,166 110,166 114,156 120,176 126,160 130,166 139,166" fill="none" stroke="#C8F135" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <ellipse cx="120" cy="248" rx="25" ry="7" fill="url(#gMetal)"/>
+  <ellipse cx="120" cy="247" rx="25" ry="7" fill="none" stroke="#C8F135" stroke-width="1.5" opacity=".8"/>
+  <circle cx="62" cy="142" r="12" fill="url(#gMetal)" stroke="#C8F135" stroke-width="1.4" opacity=".95"/>
+  <circle cx="178" cy="142" r="12" fill="url(#gMetal)" stroke="#C8F135" stroke-width="1.4" opacity=".95"/>
+
+  <!-- neck + head -->
+  <rect x="106" y="112" width="28" height="16" rx="4" fill="url(#gMetal)"/>
+  <g id="head">
+    <line x1="120" y1="28" x2="120" y2="12" stroke="#8f9bab" stroke-width="3" stroke-linecap="round"/>
+    <circle id="bulb" cx="120" cy="9" r="5.5" fill="#C8F135" filter="url(#glow)"/>
+    <ellipse cx="55" cy="72" rx="9" ry="17" fill="url(#gMetal)"/>
+    <ellipse cx="55" cy="72" rx="9" ry="17" fill="none" stroke="#C8F135" stroke-width="1.4" opacity=".8"/>
+    <ellipse cx="185" cy="72" rx="9" ry="17" fill="url(#gMetal)"/>
+    <ellipse cx="185" cy="72" rx="9" ry="17" fill="none" stroke="#C8F135" stroke-width="1.4" opacity=".8"/>
+    <rect x="60" y="26" width="120" height="92" rx="38" fill="url(#gBody)" stroke="#94a1af" stroke-width="1"/>
+    <path d="M72 44 C74 34 90 30 104 30 C88 40 80 56 80 74 C72 68 70 56 72 44 Z" fill="#fff" opacity=".45"/>
+    <rect x="70" y="38" width="100" height="64" rx="26" fill="url(#gVisor)" stroke="#2e3d50" stroke-width="1.2"/>
+    <path d="M84 46 Q120 39 156 46 L156 52 Q120 46 84 52 Z" fill="#fff" opacity=".07"/>
+    <ellipse cx="86" cy="84" rx="6" ry="3.5" fill="#C8F135" opacity=".14"/>
+    <ellipse cx="154" cy="84" rx="6" ry="3.5" fill="#C8F135" opacity=".14"/>
+    <g id="eyes">
+      <g id="eyeL"><ellipse cx="99" cy="66" rx="9" ry="12" fill="#C8F135" filter="url(#glow)"/><circle cx="96" cy="61" r="2.6" fill="#fff" opacity=".9"/></g>
+      <g id="eyeR"><ellipse cx="141" cy="66" rx="9" ry="12" fill="#C8F135" filter="url(#glow)"/><circle cx="138" cy="61" r="2.6" fill="#fff" opacity=".9"/></g>
+    </g>
+    <path id="mouthS" d="M108 85 Q120 93 132 85" fill="none" stroke="#C8F135" stroke-width="3" stroke-linecap="round" filter="url(#glow)"/>
+    <ellipse id="mouthO" cx="120" cy="86" rx="9" ry="4" fill="#C8F135" opacity="0" filter="url(#glow)"/>
+  </g>
+</svg>
+</div>
+
+<main class="stage">
+  <section class="box" id="box" aria-label="Conversation with your coach">
+    <div class="box-head">
+      <div class="who"><span class="dot" id="dot"></span>Coach Fitz <span class="state" id="state"></span></div>
+      <div class="right">
+        <button class="back" id="backBtn" type="button" hidden>Back</button>
+        <div class="count" id="count"></div>
+      </div>
+    </div>
+    <div class="bar"><i id="progress"></i></div>
+    <div class="text" id="text"></div>
+    <div class="answer" id="answer"></div>
+    <div class="sr" id="sr" aria-live="polite"></div>
+  </section>
+</main>
+<div class="note" id="note" role="status"></div>
+
+<script src="/src/assets/cursor.js"></script>
+<script>
+// Auth guard - redirect if no token
+(function checkAuth() {
+  const token = localStorage.getItem('fitform_token');
+  if (!token) {
+    window.location.href = '/';
+    return;
+  }
+})();
+
+// Load user data from localStorage
+const userData = JSON.parse(localStorage.getItem('fitform_user') || '{}');
+const FIRST_NAME = userData.first_name || userData.name || 'there';
+const DASHBOARD_URL = '/index.html';
+
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ═══════════════ BOT: movement + body language ═══════════════ */
+const Bot = (() => {
+  const el = $('bot'), box = $('box');
+  const P = {};
+  ['armL','foreL','handL','armR','foreR','handR','head','eyes','eyeL','eyeR','mouthO','mouthS','flame','bulb','beat']
+    .forEach(k => P[k] = $(k));
+
+  let pose = 'idle', speaking = false, gestureTimer = null, forced = null;
+  let t = 0, last = performance.now();
+  let angle = -0.7, spin = 0.3, prevX = null;
+  let blinkIn = 2.2, blinkP = 1;
+  const rect = { cx: innerWidth / 2, cy: innerHeight / 2, hw: 300, hh: 200 };
+  const cur = { uL: 8, fL: -6, hL: 0, uR: -8, fR: 6, hR: 0, mouth: 0, tilt: 0, head: 0, ex: 0, ey: 0 };
+  let onState = () => {};
+
+  const s = Math.sin;
+  function targets() {
+    const sway = s(t * 1.3) * 3, br = s(t * 1.7) * 3;
+    const k = RM ? 0.35 : 1;
+    switch (forced || pose) {
+      case 'wave':
+        return { uL: 10 + sway, fL: -6, hL: 0, uR: -100 + 4 * s(t * 2), fR: -78 + 26 * k * s(t * 8.5), hR: 12 * k * s(t * 8.5 + 1) };
+      case 'gestureL':
+        return { uL: 28 + 4 * s(t * 3), fL: -105 + 12 * k * s(t * 4.2), hL: 7 * k * s(t * 4), uR: -9 - sway, fR: 6 + br, hR: 0 };
+      case 'gestureR':
+        return { uR: -28 - 4 * s(t * 3.1), fR: 105 - 12 * k * s(t * 4.3), hR: -7 * k * s(t * 4.1), uL: 9 + sway, fL: -6 - br, hL: 0 };
+      case 'open':
+        return { uL: 55 + 5 * s(t * 2.6), fL: 80 + 10 * k * s(t * 3.4), hL: 6 * s(t * 3), uR: -55 - 5 * s(t * 2.7), fR: -80 - 10 * k * s(t * 3.3), hR: -6 * s(t * 3) };
+      case 'celebrate':
+        return { uL: 160 + 6 * s(t * 7), fL: -10 + 12 * k * s(t * 9), hL: 14 * s(t * 9), uR: -160 - 6 * s(t * 7 + 1), fR: 10 - 12 * k * s(t * 9), hR: -14 * s(t * 9) };
+      default:
+        return { uL: 8 + sway, fL: -6 + br, hL: 0, uR: -8 - sway, fR: 6 - br, hR: 0 };
+    }
+  }
+
+  function startCycle() {
+    const seq = ['gestureR', 'open', 'gestureL', 'gestureR', 'open', 'gestureL'];
+    let i = Math.floor(Math.random() * seq.length);
+    pose = seq[i++ % seq.length];
+    gestureTimer = setInterval(() => { pose = seq[i++ % seq.length]; }, 2700);
+  }
+
+  function setSpeaking(on, firstPose) {
+    if (on && speaking && !firstPose) return;
+    clearInterval(gestureTimer); clearTimeout(gestureTimer);
+    speaking = on;
+    if (on) {
+      if (firstPose === 'wave') { pose = 'wave'; gestureTimer = setTimeout(startCycle, 3300); }
+      else startCycle();
+    } else {
+      pose = 'idle';
+    }
+    onState(on);
+  }
+
+  function celebrate(ms = 3200) {
+    forced = 'celebrate';
+    setTimeout(() => { forced = null; }, ms);
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+    const k = 1 - Math.exp(-dt * 7);
+
+    const tg = targets();
+    for (const key of ['uL','fL','hL','uR','fR','hR']) cur[key] += (tg[key] - cur[key]) * k;
+    P.armL.setAttribute('transform', `rotate(${cur.uL.toFixed(2)} 62 142)`);
+    P.foreL.setAttribute('transform', `rotate(${cur.fL.toFixed(2)} 62 184)`);
+    P.handL.setAttribute('transform', `rotate(${cur.hL.toFixed(2)} 62 218)`);
+    P.armR.setAttribute('transform', `rotate(${cur.uR.toFixed(2)} 178 142)`);
+    P.foreR.setAttribute('transform', `rotate(${cur.fR.toFixed(2)} 178 184)`);
+    P.handR.setAttribute('transform', `rotate(${cur.hR.toFixed(2)} 178 218)`);
+
+    const open = speaking ? clamp(0.12 + 0.88 * Math.abs(s(t * 11.5)) * (0.55 + 0.45 * s(t * 3.7 + 1)), 0, 1) : 0;
+    cur.mouth += (open - cur.mouth) * (1 - Math.exp(-dt * 24));
+    const m = cur.mouth;
+    P.mouthO.setAttribute('ry', (2.5 + m * 8.5).toFixed(2));
+    P.mouthO.setAttribute('rx', (10 - m * 3).toFixed(2));
+    P.mouthO.setAttribute('cy', (85 + m * 2.5).toFixed(2));
+    P.mouthO.setAttribute('opacity', m > 0.1 ? 1 : 0);
+    P.mouthS.setAttribute('opacity', m > 0.1 ? 0 : 1);
+
+    blinkIn -= dt;
+    if (blinkIn <= 0) { blinkP = 0; blinkIn = 2 + Math.random() * 3.2; }
+    if (blinkP < 1) blinkP = Math.min(1, blinkP + dt / 0.17);
+    const sy = 1 - 0.93 * s(Math.PI * blinkP);
+    P.eyeL.setAttribute('transform', `translate(99 66) scale(1 ${sy.toFixed(3)}) translate(-99 -66)`);
+    P.eyeR.setAttribute('transform', `translate(141 66) scale(1 ${sy.toFixed(3)}) translate(-141 -66)`);
+
+    P.flame.setAttribute('transform', `translate(120 250) scale(${(1 + 0.1 * s(t * 24)).toFixed(3)} ${(0.92 + 0.22 * Math.abs(s(t * 17 + s(t * 5)))).toFixed(3)}) translate(-120 -250)`);
+    P.bulb.setAttribute('opacity', (0.65 + 0.35 * s(t * (speaking ? 8 : 3))).toFixed(2));
+    P.beat.setAttribute('opacity', (0.7 + 0.3 * s(t * (speaking ? 9 : 4))).toFixed(2));
+
+    const b = box.getBoundingClientRect();
+    const rk = 1 - Math.exp(-dt * 6);
+    rect.cx += (b.left + b.width / 2 - rect.cx) * rk;
+    rect.cy += (b.top + b.height / 2 - rect.cy) * rk;
+    rect.hw += (b.width / 2 - rect.hw) * rk;
+    rect.hh += (b.height / 2 - rect.hh) * rk;
+
+    const vw = innerWidth, vh = innerHeight;
+    const bw = el.offsetWidth, bh = el.offsetHeight;
+    const narrow = vw < 860;
+    const targetSpin = RM ? 0 : (speaking ? 0.2 : 0.3);
+    spin += (targetSpin - spin) * (1 - Math.exp(-dt * 2));
+    angle += spin * dt;
+
+    let x, y, depth = 1, rx = 1, ry = 1;
+    if (narrow) {
+      x = rect.cx + (rect.hw - bw * 0.3) * s(RM ? 0.6 : angle * 0.9);
+      y = rect.cy - rect.hh - bh * 0.42;
+    } else {
+      rx = rect.hw + bw * 0.62 + 24;
+      ry = rect.hh + bh * 0.52 + 12;
+      const a = RM ? 0.25 : angle;
+      x = rect.cx + rx * Math.cos(a);
+      y = rect.cy + ry * Math.sin(a);
+      depth = Math.sin(a);
+    }
+    x = clamp(x, bw / 2 + 8, vw - bw / 2 - 8);
+    y = clamp(y, bh / 2 + 62, vh - bh / 2 - 8);
+    y += RM ? 0 : s(t * 1.9) * 7;
+
+    const vx = prevX === null ? 0 : (x - prevX) / Math.max(dt, 0.001);
+    prevX = x;
+    cur.tilt += (clamp(vx * 0.025, -9, 9) - cur.tilt) * (1 - Math.exp(-dt * 4));
+    const scale = narrow ? 1 : 0.9 + 0.1 * (depth + 1) / 2;
+    el.style.zIndex = depth > 0 ? 20 : 5;
+    el.style.transform = `translate(${(x - bw / 2).toFixed(1)}px, ${(y - bh / 2).toFixed(1)}px) rotate(${cur.tilt.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+
+    const exT = clamp((rect.cx - x) / Math.max(rx, 200) * 5, -4.5, 4.5);
+    const eyT = clamp((rect.cy - y) / Math.max(ry, 200) * 3, -2.5, 2.5);
+    cur.ex += (exT - cur.ex) * k; cur.ey += (eyT - cur.ey) * k;
+    P.eyes.setAttribute('transform', `translate(${cur.ex.toFixed(2)} ${cur.ey.toFixed(2)})`);
+    const nod = speaking ? 2.2 * s(t * 4.1) : 0;
+    cur.head += (exT * 1.3 + nod - cur.head) * (1 - Math.exp(-dt * 9));
+    P.head.setAttribute('transform', `rotate(${cur.head.toFixed(2)} 120 118)`);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(now => { last = now; frame(now); setTimeout(() => el.classList.add('ready'), 150); });
+
+  return { setSpeaking, celebrate, onState: fn => { onState = fn; } };
+})();
+
+/* ═══════════════ VOICE: server speech (pyttsx3) + synced text ═══════════════ */
+const Voice = (() => {
+  const J = { 'Content-Type': 'application/json' };
+  const token = localStorage.getItem('fitform_token');
+  const authHeaders = token ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } : J;
+  
+  let muted = localStorage.getItem('ff_muted') === '1';
+  let serverOk = true, session = 0, skipTok = 0, currentId = null, wpm = 168;
+
+  const clean = t => t.replace(/[\p{Extended_Pictographic}\u200d\ufe0f\u20e3]/gu, '').replace(/[*_#`~]+/g, '').replace(/\s+/g, ' ').trim();
+  const wordEnd = (text, n) => { while (n < text.length && !/\s/.test(text[n])) n++; return n; };
+  const stopId = id => fetch('/api/tts/stop', { method: 'POST', headers: J, body: JSON.stringify({ id }) }).catch(() => {});
+
+  function note(msg) { const n = $('note'); n.textContent = msg; n.classList.toggle('show', !!msg); }
+
+  function makeLine(host, full, append) {
+    const p = document.createElement('p'); p.className = 'line';
+    const shown = document.createElement('span'), caret = document.createElement('span'), rest = document.createElement('span');
+    caret.className = 'caret'; rest.className = 'rest'; rest.textContent = full;
+    p.append(shown, caret, rest);
+    append ? host.appendChild(p) : host.replaceChildren(p);
+    return n => {
+      shown.textContent = full.slice(0, n);
+      rest.textContent = full.slice(n);
+      caret.style.display = n >= full.length ? 'none' : '';
+    };
+  }
+
+  async function say(text, host, { append = false, pose } = {}) {
+    const my = ++session;
+    const full = clean(text);
+    const set = makeLine(host, full, append);
+    set(0);
+    $('sr').textContent = full;
+    Bot.setSpeaking(true, pose);
+
+    let id = null, wantServer = !muted && serverOk;
+    if (wantServer) {
+      try {
+        const r = await fetch('/api/tts/speak', { method: 'POST', headers: J, body: JSON.stringify({ text }) });
+        const j = await r.json();
+        if (!r.ok || !j.ok) throw new Error(j.error || 'Voice unavailable');
+        id = j.id; wpm = j.wpm || wpm; currentId = id;
+        console.log('[TTS] Started speech ID:', id);
+      } catch (e) {
+        serverOk = false;
+        console.error('[TTS] Error:', e);
+        note("Voice isn't available. The text will still appear.");
+        setTimeout(() => note(''), 6000);
+      }
+    }
+
+    const cps = wpm * 5.7 / 60;
+    const t0 = performance.now();
+    let shown = 0, startedAt = null, done = false;
+
+    while (true) {
+      if (my !== session && skipTok !== my) { if (id) stopId(id); return; }
+      if (skipTok === my) { if (id) stopId(id); break; }
+
+      let n = shown;
+      if (id) {
+        let pr = null;
+        try { pr = await (await fetch('/api/tts/progress?id=' + id)).json(); } catch (e) {}
+        if (my !== session && skipTok !== my) { stopId(id); return; }
+        if (skipTok === my) { stopId(id); break; }
+        if (pr) {
+          if (pr.error) { id = null; continue; }
+          if (pr.started && startedAt === null) startedAt = performance.now();
+          if (pr.done) { n = full.length; done = true; }
+          else if (pr.events) n = wordEnd(full, Math.ceil(pr.frac * full.length));
+          else if (startedAt !== null && performance.now() - startedAt > 450) {
+            n = Math.floor((performance.now() - startedAt - 250) / 1000 * cps);
+          }
+        }
+      } else {
+        n = Math.floor((performance.now() - t0) / 1000 * cps);
+        if (n >= full.length) done = true;
+      }
+      n = Math.min(full.length, Math.max(shown, n));
+      if (n !== shown) { shown = n; set(n); }
+      if (done) break;
+      await sleep(150);
+    }
+    set(full.length);
+    if (my === session) Bot.setSpeaking(false);
+  }
+
+  function skip() { skipTok = session; }
+  function cancel() {
+    session++;
+    if (currentId) stopId(currentId);
+    Bot.setSpeaking(false);
+  }
+  function setMuted(m) {
+    muted = m; localStorage.setItem('ff_muted', m ? '1' : '0');
+    if (m) { skip(); }
+  }
+  return { say, skip, cancel, setMuted, get muted() { return muted; }, note };
+})();
+
+/* ═══════════════ CONVERSATION ═══════════════ */
+const textEl = $('text'), answerEl = $('answer');
+const A = {};
+const U = { height: 'cm', weight: 'kg' };
+const history = [];
+let ackIdx = 0;
+const ack = () => ['Got it.', 'Thanks.', 'Okay.', 'Perfect.', 'Nice.'][ackIdx++ % 5];
+
+const MULTI_NONE = 'None';
+const steps = [
+  { id: 'age', type: 'number', unit: 'years', min: 13, max: 90, ph: 'Age',
+    ask: () => "Let's start simple. How old are you?" },
+  { id: 'gender', type: 'chips', opts: [['male','Male'],['female','Female'],['other','Prefer not to say']],
+    ask: () => `${ack()} Are you male or female? This helps me work out your calorie needs more accurately.` },
+  { id: 'height_cm', type: 'height',
+    ask: () => `${ack()} How tall are you?` },
+  { id: 'weight_kg', type: 'weight',
+    ask: () => `${ack()} And what's your current weight?` },
+  { id: 'goal', type: 'chips', opts: [['lose','Lose weight'],['muscle','Build muscle'],['tone','Stay fit and tone up'],['endurance','Improve endurance']],
+    ask: () => 'Now the big one. What is your main fitness goal? Do you want to lose weight, build muscle, stay fit and tone up, or improve your endurance?' },
+  { id: 'target_weight_kg', type: 'target', skip: () => !['lose','muscle'].includes(A.goal),
+    ask: () => A.goal === 'lose'
+      ? "Great choice. What weight would you like to reach? You can skip this if you're not sure."
+      : "Awesome. Do you have a target body weight in mind? You can skip this if you're not sure." },
+  { id: 'experience', type: 'chips', opts: [['beginner','Beginner'],['intermediate','Intermediate'],['advanced','Advanced']],
+    ask: () => 'How much training experience do you have? Beginner means under six months, intermediate is up to two years, and advanced is more than that.' },
+  { id: 'days_per_week', type: 'chips', opts: [[2,'2 days'],[3,'3 days'],[4,'4 days'],[5,'5 days'],[6,'6 days']],
+    ask: () => `${ack()} How many days a week can you realistically train?` },
+  { id: 'location', type: 'chips', opts: [['home','At home'],['gym','At the gym'],['both','A mix of both']],
+    ask: () => 'And where will you be training? At home, at the gym, or a mix of both?' },
+  { id: 'activity', type: 'chips', opts: [['sedentary','Mostly sitting'],['light','Light movement'],['moderate','On my feet a lot'],['high','Very physical']],
+    ask: () => 'Outside your workouts, how active is your day? This changes how many calories you burn.' },
+  { id: 'diet', type: 'chips', opts: [['vegetarian','Vegetarian'],['non-vegetarian','Non-vegetarian'],['eggetarian','Eggetarian'],['vegan','Vegan']],
+    ask: () => 'What does your diet look like? Vegetarian, non-vegetarian, eggetarian, or vegan?' },
+  { id: 'limitations', type: 'multi', opts: ['Lower back','Knees','Shoulders','Other'],
+    ask: () => "Last question. Do you have any injuries or limits I should plan around? Pick all that apply, or choose none." },
+];
+
+const visible = () => steps.filter(s => !(s.skip && s.skip()));
+
+function updateHead(i) {
+  const v = visible(), pos = v.indexOf(steps[i]);
+  $('count').textContent = `Question ${pos + 1} of ${v.length}`;
+  $('progress').style.width = (pos / v.length * 100) + '%';
+  $('backBtn').hidden = history.length === 0;
+}
+
+Bot.onState(on => {
+  $('dot').classList.toggle('talk', on);
+  $('state').textContent = on ? 'speaking' : (answerEl.children.length ? 'waiting for you' : '');
+});
+
+/* ── input widgets ── */
+function showErr(msg) { const e = answerEl.querySelector('.err'); if (e) e.textContent = msg || ''; }
+
+function errBox() { const d = document.createElement('div'); d.className = 'err'; return d; }
+
+function numField(ph, suffix, wide) {
+  const f = document.createElement('label'); f.className = 'field';
+  const i = document.createElement('input');
+  i.type = 'number'; i.inputMode = 'decimal'; i.step = 'any'; i.placeholder = ph; i.autocomplete = 'off';
+  if (wide) i.className = 'wide';
+  f.appendChild(i);
+  if (suffix) { const s = document.createElement('span'); s.className = 'suffix'; s.textContent = suffix; f.appendChild(s); }
+  return { wrap: f, input: i };
+}
+
+function unitToggle(kind, list, onChange) {
+  const g = document.createElement('div'); g.className = 'units'; g.setAttribute('role', 'group');
+  list.forEach(u => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'unit'; b.textContent = u;
+    b.setAttribute('aria-pressed', U[kind] === u);
+    b.onclick = () => { U[kind] = u; [...g.children].forEach(c => c.setAttribute('aria-pressed', c.textContent === u)); onChange(); };
+    g.appendChild(b);
+  });
+  return g;
+}
+
+function nextBtn(label, fn) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = label; b.onclick = fn; return b;
+}
+
+function renderInput(st) {
+  answerEl.replaceChildren();
+  answerEl.classList.remove('enter'); void answerEl.offsetWidth; answerEl.classList.add('enter');
+  const row = document.createElement('div'); row.className = 'row';
+  answerEl.append(row);
+  const e = errBox();
+  let first = null;
+  const enter = (...inputs) => inputs.forEach(i => i.addEventListener('keydown', ev => { if (ev.key === 'Enter') go(); }));
+  let go = () => {};
+
+  if (st.type === 'number') {
+    const f = numField(st.ph, st.unit); first = f.input; enter(f.input);
+    go = () => {
+      const v = Math.round(parseFloat(f.input.value));
+      if (!(v >= st.min && v <= st.max)) return showErr(`Enter an age between ${st.min} and ${st.max}.`);
+      submit(st, v);
+    };
+    row.append(f.wrap, nextBtn('Next', () => go()));
+    if (A[st.id]) f.input.value = A[st.id];
+  }
+
+  if (st.type === 'height') {
+    const holder = document.createElement('div'); holder.style.display = 'contents';
+    const build = () => {
+      holder.replaceChildren();
+      if (U.height === 'cm') {
+        const f = numField('Height', 'cm'); first = f.input; enter(f.input);
+        if (A.height_cm) f.input.value = Math.round(A.height_cm);
+        go = () => {
+          const cm = parseFloat(f.input.value);
+          if (!(cm >= 100 && cm <= 250)) return showErr('Enter a height between 100 and 250 cm.');
+          submit(st, Math.round(cm * 10) / 10);
+        };
+        holder.append(f.wrap);
+      } else {
+        const ft = numField('Feet', 'ft'), inch = numField('Inches', 'in'); first = ft.input; enter(ft.input, inch.input);
+        if (A.height_cm) { const ti = A.height_cm / 2.54; ft.input.value = Math.floor(ti / 12); inch.input.value = Math.round(ti % 12); }
+        go = () => {
+          const cm = (parseFloat(ft.input.value || 0) * 12 + parseFloat(inch.input.value || 0)) * 2.54;
+          if (!(cm >= 100 && cm <= 250)) return showErr('Enter a realistic height, for example 5 ft 8 in.');
+          submit(st, Math.round(cm * 10) / 10);
+        };
+        holder.append(ft.wrap, inch.wrap);
+      }
+      first.focus();
+    };
+    row.append(holder, unitToggle('height', ['cm', 'ft'], build), nextBtn('Next', () => go()));
+    build();
+  }
+
+  if (st.type === 'weight' || st.type === 'target') {
+    const holder = document.createElement('div'); holder.style.display = 'contents';
+    const f = numField(st.type === 'target' ? 'Target' : 'Weight', U.weight); first = f.input; enter(f.input);
+    const toKg = v => U.weight === 'kg' ? v : v * 0.45359237;
+    if (st.type === 'weight' && A.weight_kg) f.input.value = Math.round(U.weight === 'kg' ? A.weight_kg : A.weight_kg / 0.45359237);
+    go = () => {
+      const raw = parseFloat(f.input.value);
+      const kg = Math.round(toKg(raw) * 10) / 10;
+      if (!(kg >= 30 && kg <= 300)) return showErr('Enter a weight between 30 and 300 kg (66 to 660 lb).');
+      if (st.type === 'target') {
+        if (A.goal === 'lose' && kg >= A.weight_kg) return showErr('Your target should be lower than your current weight.');
+        if (A.goal === 'muscle' && kg <= A.weight_kg) return showErr('Your target should be higher than your current weight.');
+      }
+      submit(st, kg);
+    };
+    row.append(f.wrap);
+    if (st.type === 'weight') {
+      row.append(unitToggle('weight', ['kg', 'lb'], () => { f.wrap.querySelector('.suffix').textContent = U.weight; f.input.focus(); }));
+    }
+    row.append(nextBtn('Next', () => go()));
+    if (st.type === 'target') {
+      const skipB = document.createElement('button'); skipB.type = 'button'; skipB.className = 'chip'; skipB.textContent = 'Skip';
+      skipB.onclick = () => submit(st, null);
+      row.append(skipB);
+    }
+  }
+
+  if (st.type === 'chips') {
+    row.className = 'chips';
+    st.opts.forEach(([val, label]) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = label;
+      b.setAttribute('aria-pressed', A[st.id] === val);
+      b.onclick = () => submit(st, val);
+      row.append(b);
+    });
+  }
+
+  if (st.type === 'multi') {
+    row.className = 'chips';
+    const picked = new Set();
+    const none = document.createElement('button'); none.type = 'button'; none.className = 'chip'; none.textContent = MULTI_NONE; none.setAttribute('aria-pressed', false);
+    const chips = st.opts.map(o => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = o; b.setAttribute('aria-pressed', false);
+      b.onclick = () => {
+        picked.has(o) ? picked.delete(o) : picked.add(o);
+        b.setAttribute('aria-pressed', picked.has(o));
+        none.setAttribute('aria-pressed', false);
+      };
+      return b;
+    });
+    none.onclick = () => { picked.clear(); chips.forEach(c => c.setAttribute('aria-pressed', false)); none.setAttribute('aria-pressed', true); };
+    row.append(none, ...chips);
+    const extra = document.createElement('div'); extra.className = 'multi-extra';
+    const f = document.createElement('label'); f.className = 'field';
+    const t = document.createElement('input'); t.type = 'text'; t.className = 'wide'; t.maxLength = 120; t.placeholder = 'Anything else I should know? (optional)';
+    f.append(t); extra.append(f);
+    const fin = document.createElement('div'); fin.className = 'row'; fin.append(nextBtn('Finish', () => go()));
+    answerEl.append(extra, fin);
+    go = () => {
+      const parts = [...picked]; if (t.value.trim()) parts.push(t.value.trim());
+      submit(st, parts.length ? parts.join(', ') : 'none');
+    };
+    enter(t);
+  }
+
+  answerEl.append(e);
+  if (first) first.focus();
+}
+
+/* ── flow control ── */
+let busy = false;
+function nextIndex(i) { let j = i + 1; while (steps[j] && steps[j].skip && steps[j].skip()) j++; return j; }
+
+function submit(st, value) {
+  if (busy) return;
+  const i = steps.indexOf(st);
+  A[st.id] = value;
+  if (st.id === 'goal') delete A.target_weight_kg;
+  history.push(i);
+  Voice.cancel();
+  const j = nextIndex(i);
+  j < steps.length ? runStep(j) : finish();
+}
+
+function back() {
+  if (!history.length || busy) return;
+  Voice.cancel();
+  runStep(history.pop(), true);
+}
+
+async function runStep(i, isBack) {
+  const st = steps[i];
+  updateHead(i);
+  renderInput(st);
+  await Voice.say(st.ask(), textEl);
+}
+
+async function finish() {
+  busy = true;
+  answerEl.replaceChildren();
+  $('progress').style.width = '100%';
+  $('count').textContent = 'All done';
+  $('backBtn').hidden = true;
+
+  const token = localStorage.getItem('fitform_token');
+  const payload = {
+    age: A.age, gender: A.gender, height_cm: A.height_cm, weight_kg: A.weight_kg, goal: A.goal,
+    target_weight_kg: A.target_weight_kg ?? null, experience: A.experience, days_per_week: A.days_per_week,
+    location: A.location, activity: A.activity, diet: A.diet, limitations: A.limitations === 'none' ? '' : A.limitations,
+  };
+  let r;
+  try {
+    const res = await fetch('/api/user/onboarding', { 
+      method: 'POST', 
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }, 
+      body: JSON.stringify(payload) 
+    });
+    r = await res.json();
+    if (!res.ok || !r.ok) throw new Error(r.error || 'Could not save');
+    
+    // Update localStorage to mark onboarding as done
+    const user = JSON.parse(localStorage.getItem('fitform_user') || '{}');
+    user.onboarding_done = true;
+    localStorage.setItem('fitform_user', JSON.stringify(user));
+  } catch (e) {
+    await Voice.say("Sorry, I couldn't save your answers. " + e.message + " Please sign in again and try once more.", textEl);
+    const a = document.createElement('a'); a.className = 'btn'; a.href = '/'; a.textContent = 'Back to sign in';
+    answerEl.append(a); busy = false; return;
+  }
+
+  const goalLine = {
+    lose: 'To lose weight steadily', muscle: 'To build muscle', tone: 'To stay fit and tone up', endurance: 'To build your endurance',
+  }[A.goal];
+  const placeLine = { home: 'with exercises you can do at home', gym: 'built around gym equipment', both: 'mixing home and gym sessions' }[A.location];
+  const limits = A.limitations && A.limitations !== 'none' ? ` I'll also steer you away from movements that stress your ${A.limitations.toLowerCase()}.` : '';
+  const minor = A.age < 18 ? " Since you're under 18, please talk to a parent or a doctor before changing your diet." : '';
+
+  const lines = [
+    `Thanks, ${FIRST_NAME}. I have everything I need. Your BMI is ${r.bmi}, which is ${r.bmi_label}.`,
+    `${goalLine}, aim for about ${r.calories} calories and ${r.protein} grams of protein a day.${minor}`,
+    `I'd train you ${A.days_per_week} days a week with a ${r.split} split, ${placeLine}.${limits}`,
+    `These numbers are estimates, so check with a doctor if you have any health conditions. Your dashboard is ready whenever you are.`,
+  ];
+  for (let k = 0; k < lines.length; k++) {
+    await Voice.say(lines[k], textEl, { append: k > 0, pose: k === 0 ? 'wave' : undefined });
+  }
+  Bot.celebrate(3500);
+  const go = document.createElement('a'); go.className = 'btn'; go.href = DASHBOARD_URL; go.textContent = 'Go to my dashboard';
+  go.style.minHeight = '52px';
+  answerEl.replaceChildren(go); answerEl.classList.remove('enter'); void answerEl.offsetWidth; answerEl.classList.add('enter');
+  go.focus();
+  busy = false;
+}
+
+/* ── controls ── */
+$('backBtn').onclick = back;
+$('skipBtn').onclick = () => Voice.skip();
+function paintMute() {
+  const m = Voice.muted;
+  $('muteBtn').setAttribute('aria-pressed', m);
+  $('muteLabel').textContent = m ? 'Voice off' : 'Voice on';
+  $('muteIcon').innerHTML = m
+    ? '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6"/><path d="M16 9l6 6"/>'
+    : '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M18.5 5.5a9 9 0 010 13"/>';
+}
+$('muteBtn').onclick = () => { Voice.setMuted(!Voice.muted); paintMute(); };
+paintMute();
+
+/* ── start ── */
+(async function start() {
+  await sleep(700);
+  await Voice.say(`Hi ${FIRST_NAME}! I'm Fitz, your FitForm coach. I'll ask you a few quick questions, then set up your plan. It only takes a minute or two.`, textEl, { pose: 'wave' });
+  await sleep(350);
+  runStep(0);
+})();
+</script>
+</body>
+</html>

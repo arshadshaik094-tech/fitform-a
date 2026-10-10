@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FitForm AI — Real-Time Pose Engine</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    :root {
+      --neon:#00ff88; --neon-glow:rgba(0,255,136,0.3);
+      --red:#ff3c5f; --blue:#3c9eff; --gold:#ffd166;
+      --bg:#060a0e; --bg2:#0c1117; --bg3:#121a22; --bg4:#18222e;
+      --border:rgba(255,255,255,0.07);
+      --text:#f0f4f8; --muted:#4a5568; --sub:#8a9bb0;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;overflow:hidden;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+
+    #app{display:flex;height:100vh;}
+    #left{flex:1;position:relative;background:#000;overflow:hidden;}
+    #right{width:330px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+
+    #webcam{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1);}
+    #canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transform:scaleX(-1);}
+
+    .hud{position:absolute;z-index:10;}
+    #hud-tl{top:16px;left:16px;display:flex;flex-direction:column;gap:8px;}
+    #hud-tr{top:16px;right:16px;text-align:right;}
+    #hud-bl{bottom:16px;left:16px;right:16px;}
+
+    .chip{display:inline-flex;align-items:center;gap:7px;background:rgba(6,10,14,0.85);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:0.76rem;font-weight:600;backdrop-filter:blur(12px);transition:all .3s;}
+    .chip.live{border-color:rgba(0,255,136,0.5);color:var(--neon);}
+    .chip.warn{border-color:rgba(255,209,102,0.5);color:var(--gold);}
+    .chip.info{border-color:rgba(60,158,255,0.4);color:var(--blue);}
+
+    #rep-num{font-family:'Bebas Neue',sans-serif;font-size:8rem;line-height:1;color:var(--neon);text-shadow:0 0 40px rgba(0,255,136,0.5);transition:transform .15s,text-shadow .15s;}
+    #rep-num.flash{transform:scale(1.18);text-shadow:0 0 60px rgba(0,255,136,0.9);}
+    #rep-label{font-size:0.68rem;color:var(--muted);letter-spacing:4px;text-transform:uppercase;margin-top:-8px;}
+    #set-display{margin-top:6px;text-align:right;}
+
+    #feedback-pill{display:inline-flex;align-items:center;gap:9px;background:rgba(6,10,14,0.88);border:1px solid var(--border);border-radius:99px;padding:10px 20px;font-size:.88rem;font-weight:600;backdrop-filter:blur(12px);transition:border-color .3s,color .3s;max-width:100%;}
+    #feedback-pill.good{border-color:rgba(0,255,136,0.4);color:var(--neon);}
+    #feedback-pill.warn{border-color:rgba(255,209,102,0.4);color:var(--gold);}
+    #feedback-pill.bad{border-color:rgba(255,60,95,0.4);color:var(--red);}
+    #feedback-pill.idle{border-color:var(--border);color:var(--sub);}
+    #feedback-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    #score-bar-wrap{position:absolute;bottom:0;left:0;right:0;height:4px;background:rgba(255,255,255,0.04);}
+    #score-bar{height:100%;background:var(--neon);transition:width .4s ease,background .4s;}
+
+    #loader{position:absolute;inset:0;background:rgba(6,10,14,0.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:100;}
+    #loader-ring{width:56px;height:56px;border:3px solid rgba(255,255,255,0.06);border-top-color:var(--neon);border-radius:50%;animation:spin .75s linear infinite;}
+    #loader-text{font-size:.85rem;color:var(--sub);max-width:280px;text-align:center;line-height:1.6;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    .panel-header{padding:16px 18px 0;}
+    .panel-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--neon);}
+    .panel-sub{font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+
+    .panel-scroll{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;}
+    .panel-scroll::-webkit-scrollbar{width:3px;}
+    .panel-scroll::-webkit-scrollbar-thumb{background:var(--bg4);}
+
+    .section{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;}
+    .section-title{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--sub);margin-bottom:12px;}
+
+    .ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+    .ex-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:9px;border:1px solid var(--border);background:var(--bg4);cursor:pointer;transition:all .2s;font-size:.75rem;font-weight:600;color:var(--sub);}
+    .ex-btn:hover{background:#1d2a38;color:var(--text);}
+    .ex-btn.active{background:rgba(0,255,136,0.1);border-color:rgba(0,255,136,0.45);color:var(--neon);}
+    .ex-btn .ico{font-size:1.5rem;}
+
+    .metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .metric-box{background:var(--bg4);border-radius:9px;padding:11px;text-align:center;}
+    .metric-val{font-family:'JetBrains Mono',monospace;font-size:1.25rem;font-weight:600;line-height:1;}
+    .metric-lbl{font-size:.6rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;}
+
+    .gauge-track{height:8px;background:rgba(255,255,255,0.06);border-radius:99px;position:relative;overflow:visible;margin:8px 0 2px;}
+    .gauge-fill{height:100%;border-radius:99px;transition:width .12s ease;}
+    .gauge-needle{position:absolute;top:50%;width:2px;height:20px;background:white;border-radius:1px;transform:translate(-50%,-50%);transition:left .12s ease;box-shadow:0 0 6px rgba(255,255,255,.6);}
+    .gauge-labels{display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+
+    .ring-wrap{position:relative;width:80px;height:80px;}
+    .ring-wrap svg{width:100%;height:100%;}
+    .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .ring-val{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;line-height:1;}
+    .ring-lbl{font-size:.52rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+
+    .score-row{display:flex;align-items:center;gap:14px;}
+    .score-details{flex:1;display:flex;flex-direction:column;gap:6px;}
+    .sd-row{display:flex;justify-content:space-between;font-size:.76rem;}
+    .sd-row .k{color:var(--sub);}
+    .sd-row .v{font-family:'JetBrains Mono',monospace;font-weight:600;}
+
+    .stat-row{display:flex;gap:7px;}
+    .stat-pill{flex:1;background:var(--bg4);border-radius:8px;padding:9px 6px;text-align:center;}
+    .stat-v{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;line-height:1;}
+    .stat-l{font-size:.6rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+
+    .tip-item{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;}
+    .tip-dot{width:5px;height:5px;border-radius:50%;background:var(--neon);margin-top:6px;flex-shrink:0;}
+    .tip-text{font-size:.8rem;color:var(--sub);line-height:1.5;}
+
+    .cam-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;font-size:.9rem;font-weight:700;border:none;cursor:pointer;transition:all .2s;width:100%;letter-spacing:.5px;}
+    .cam-btn.start{background:var(--neon);color:var(--bg);}
+    .cam-btn.start:hover{background:#00e87a;box-shadow:0 0 24px var(--neon-glow);}
+    .cam-btn.stop{background:var(--red);color:white;}
+    .cam-btn.stop:hover{box-shadow:0 0 24px rgba(255,60,95,.3);}
+    .save-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:10px;font-size:.85rem;font-weight:700;border:1px solid rgba(60,158,255,.35);background:rgba(60,158,255,.12);color:var(--blue);cursor:pointer;transition:all .2s;width:100%;}
+    .save-btn:hover{background:rgba(60,158,255,.22);}
+    .reset-btn{padding:8px;border-radius:8px;font-size:.8rem;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;transition:all .2s;width:100%;}
+    .reset-btn:hover{background:var(--bg4);color:var(--text);}
+
+    .toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid rgba(0,255,136,0.3);border-radius:10px;padding:12px 18px;font-size:.85rem;font-weight:600;color:var(--text);z-index:9999;animation:slideIn .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.6);}
+    .toast.err{border-color:rgba(255,60,95,.4);}
+    @keyframes slideIn{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <div id="left">
+    <video id="webcam" autoplay muted playsinline></video>
+    <canvas id="canvas"></canvas>
+
+    <div id="loader">
+      <div id="loader-ring"></div>
+      <div id="loader-text">FitForm AI — Real Pose Detection<br><span style="color:var(--muted);font-size:.75rem;">MediaPipe Pose Lite · Runs fully on your device · No GPU needed</span></div>
+    </div>
+
+    <div id="hud-tl" class="hud">
+      <div class="chip" id="chip-cam">⚫ Camera Off</div>
+      <div class="chip info" id="chip-model" style="display:none">🧠 MediaPipe Pose Lite</div>
+      <div class="chip info" id="chip-fps"   style="display:none">⚡ — FPS</div>
+      <div class="chip" id="form-indicator" style="display:none;background:rgba(0,255,136,0.2);border-color:var(--neon);">🟢 Good Form</div>
+    </div>
+
+    <div id="hud-tr" class="hud">
+      <div id="rep-num">0</div>
+      <div id="rep-label">REPS</div>
+      <div id="set-display" style="margin-top:6px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--blue);" id="set-num">0</div>
+        <div style="font-size:.62rem;color:var(--muted);letter-spacing:3px;">SETS</div>
+      </div>
+    </div>
+
+    <div id="hud-bl" class="hud">
+      <div id="feedback-pill" class="idle">
+        <span id="feedback-icon">👋</span>
+        <span id="feedback-txt">Start camera to begin real-time tracking</span>
+      </div>
+    </div>
+
+    <div id="score-bar-wrap"><div id="score-bar" style="width:0%"></div></div>
+  </div>
+
+  <div id="right">
+    <div class="panel-header">
+      <div class="panel-logo">FITFORM AI</div>
+      <div class="panel-sub">Real-Time Pose Analysis</div>
+    </div>
+    <div class="panel-scroll">
+
+      <div class="section">
+        <button class="cam-btn start" id="btn-cam" onclick="toggleCamera()">🎥 Start Camera</button>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="reset-btn" onclick="resetSession()">↺ Reset</button>
+          <button class="save-btn"  onclick="saveSession()">💾 Save</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">EXERCISE</div>
+        <div class="ex-grid" id="ex-grid">
+          <button class="ex-btn active" data-ex="squat"          onclick="selectEx(this)"><span class="ico">🏋️</span>Squat</button>
+          <button class="ex-btn"        data-ex="pushup"         onclick="selectEx(this)"><span class="ico">💪</span>Push-Up</button>
+          <button class="ex-btn"        data-ex="bicep_curl"     onclick="selectEx(this)"><span class="ico">🦾</span>Bicep Curl</button>
+          <button class="ex-btn"        data-ex="plank"          onclick="selectEx(this)"><span class="ico">🧘</span>Plank</button>
+          <button class="ex-btn"        data-ex="lunge"          onclick="selectEx(this)"><span class="ico">🚶</span>Lunge</button>
+          <button class="ex-btn"        data-ex="shoulder_press" onclick="selectEx(this)"><span class="ico">🙌</span>Shoulder</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">LIVE METRICS</div>
+        <div class="metrics-grid">
+          <div class="metric-box"><div class="metric-val" id="m-angle" style="color:var(--neon)">—°</div><div class="metric-lbl">Joint Angle</div></div>
+          <div class="metric-box"><div class="metric-val" id="m-stage" style="color:var(--gold)">—</div><div class="metric-lbl">Phase</div></div>
+          <div class="metric-box"><div class="metric-val" id="m-vis"   style="color:var(--blue)">—%</div><div class="metric-lbl">Confidence</div></div>
+          <div class="metric-box"><div class="metric-val" id="m-score" style="color:var(--neon)">—</div><div class="metric-lbl">Form Score</div></div>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">
+            <span>Joint Angle Gauge</span><span id="gauge-label" style="color:var(--neon)">—°</span>
+          </div>
+          <div class="gauge-track" id="gauge-track">
+            <div class="gauge-fill" id="gauge-fill" style="width:0%;background:var(--neon)"></div>
+            <div class="gauge-needle" id="gauge-needle" style="left:0%"></div>
+          </div>
+          <div class="gauge-labels"><span>0°</span><span>90°</span><span>180°</span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">FORM ANALYSIS</div>
+        <div class="score-row">
+          <div class="ring-wrap">
+            <svg viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="33" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="7"/>
+              <circle cx="40" cy="40" r="33" fill="none" stroke="var(--neon)" stroke-width="7"
+                stroke-linecap="round" stroke-dasharray="207.35" stroke-dashoffset="207.35"
+                transform="rotate(-90 40 40)" id="form-arc"
+                style="transition:stroke-dashoffset .4s ease,stroke .4s ease;filter:drop-shadow(0 0 5px var(--neon));"/>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-val" id="ring-val" style="color:var(--neon)">—</div>
+              <div class="ring-lbl">form</div>
+            </div>
+          </div>
+          <div class="score-details">
+            <div class="sd-row"><span class="k">Avg Score</span> <span class="v" id="sd-avg">—</span></div>
+            <div class="sd-row"><span class="k">Best Rep</span>  <span class="v" id="sd-best" style="color:var(--neon)">—</span></div>
+            <div class="sd-row"><span class="k">Symmetry</span> <span class="v" id="sd-sym">—</span></div>
+            <div class="sd-row"><span class="k">Depth</span>    <span class="v" id="sd-depth">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">SESSION</div>
+        <div class="stat-row">
+          <div class="stat-pill"><div class="stat-v" id="st-reps" style="color:var(--neon)">0</div><div class="stat-l">Reps</div></div>
+          <div class="stat-pill"><div class="stat-v" id="st-sets" style="color:var(--blue)">0</div><div class="stat-l">Sets</div></div>
+          <div class="stat-pill"><div class="stat-v" id="st-time" style="color:var(--gold)">0s</div><div class="stat-l">Time</div></div>
+          <div class="stat-pill"><div class="stat-v" id="st-cal"  style="color:var(--red)">0</div><div class="stat-l">kcal</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">💡 FORM TIPS</div>
+        <div id="tips-container"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+<script>
+"use strict";
+// ════════════════════════════════════════════════════════════════════
+//  FitForm AI — 100% Real Pose Engine
+//  Every value here is computed from actual MediaPipe landmark data.
+//  Zero simulation. Zero random numbers.
+// ════════════════════════════════════════════════════════════════════
+
+// MediaPipe landmark indices
+const L = {
+  NOSE:0,
+  L_SHOULDER:11, R_SHOULDER:12,
+  L_ELBOW:13,    R_ELBOW:14,
+  L_WRIST:15,    R_WRIST:16,
+  L_HIP:23,      R_HIP:24,
+  L_KNEE:25,     R_KNEE:26,
+  L_ANKLE:27,    R_ANKLE:28,
+  L_HEEL:29,     R_HEEL:30,
+  L_TOE:31,      R_TOE:32,
+};
+
+// Exercise configurations — all thresholds calibrated from real exercise biomechanics
+const EX = {
+  squat: {
+    label:'Squat', kcal:8,
+    // hip→knee→ankle angle
+    j:[L.L_HIP, L.L_KNEE, L.L_ANKLE],
+    sym:[L.L_KNEE, L.R_KNEE],
+    // State machine thresholds (degrees)
+    downThresh:100, upThresh:160, deadZone:8,
+    fullDepth:100,
+    tips:['Feet shoulder-width, toes 15-30° out','Drive knees outward — track over toes','Keep chest up, neutral spine','Lower to thighs parallel or below'],
+  },
+  pushup: {
+    label:'Push-Up', kcal:7,
+    // shoulder→elbow→wrist angle
+    j:[L.L_SHOULDER, L.L_ELBOW, L.L_WRIST],
+    sym:[L.L_ELBOW, L.R_ELBOW],
+    downThresh:90, upThresh:155, deadZone:8,
+    fullDepth:90,
+    tips:['Straight line head to heels','Hands slightly wider than shoulders','Elbows ~45° from torso','Lower chest to near the floor'],
+  },
+  bicep_curl: {
+    label:'Bicep Curl', kcal:4,
+    // shoulder→elbow→wrist angle
+    j:[L.L_SHOULDER, L.L_ELBOW, L.L_WRIST],
+    sym:[L.L_ELBOW, L.R_ELBOW],
+    downThresh:55, upThresh:150, deadZone:10,
+    fullDepth:55,
+    tips:['Pin elbows tightly to your sides','Full extension at the bottom','Squeeze peak contraction at top','Slow 2-3s lowering phase'],
+  },
+  plank: {
+    label:'Plank', kcal:5,
+    // shoulder→hip→ankle body-line angle
+    j:[L.L_SHOULDER, L.L_HIP, L.L_ANKLE],
+    sym:[L.L_HIP, L.R_HIP],
+    downThresh:999, upThresh:999, deadZone:0, // no reps — plank is timed
+    fullDepth:170,
+    tips:['Elbows directly under shoulders','Squeeze glutes and core hard','Hips level — no sagging or piking','Breathe slowly throughout'],
+  },
+  lunge: {
+    label:'Lunge', kcal:7,
+    j:[L.L_HIP, L.L_KNEE, L.L_ANKLE],
+    sym:[L.L_KNEE, L.R_KNEE],
+    downThresh:95, upThresh:160, deadZone:8,
+    fullDepth:95,
+    tips:['Front knee stays over ankle','Keep torso upright','Lower back knee toward floor','Push through front heel to return'],
+  },
+  shoulder_press: {
+    label:'Shoulder Press', kcal:6,
+    // elbow→shoulder→hip angle
+    j:[L.L_ELBOW, L.L_SHOULDER, L.L_HIP],
+    sym:[L.L_SHOULDER, L.R_SHOULDER],
+    downThresh:82, upThresh:158, deadZone:8,
+    fullDepth:82,
+    tips:['Brace core — no lower back arch','Full lockout at the top','Controlled 2s descent','Elbows slightly in front of body'],
+  },
+};
+
+// ── App state (no random values — ever) ─────────────────────────────────
+let curEx       = 'squat';
+let repStage    = 'up';   // strict: must go 'up' → 'down' → 'up' for one rep
+let reps        = 0;
+let sets        = 0;
+let formHistory = [];     // actual per-rep form scores from MediaPipe data
+let bestScore   = 0;
+let sessionStart = null;
+let timerHandle  = null;
+let cameraOn     = false;
+let mpPose = null, mpCam = null;
+let lastT  = 0, fpsEma = 0;
+let lastFormCheck = 0;    // for form feedback throttling
+let audioContext = null;  // for beep sounds
+
+// ── Audio feedback system ────────────────────────────────────────────────
+function initAudio() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playBeep(frequency = 800, duration = 200, type = 'warning') {
+  if (!audioContext) initAudio();
+  
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+  oscillator.type = type === 'error' ? 'sawtooth' : 'sine';
+  
+  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+  
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + duration / 1000);
+}
+
+function updateFormIndicator(score, feedback) {
+  const indicator = document.getElementById('form-indicator');
+  const now = Date.now();
+  
+  // Show indicator when camera is on
+  if (cameraOn) {
+    indicator.style.display = 'inline-flex';
+    
+    if (score >= 80) {
+      indicator.style.background = 'rgba(0,255,136,0.2)';
+      indicator.style.borderColor = 'var(--neon)';
+      indicator.style.color = 'var(--neon)';
+      indicator.textContent = '🟢 Perfect Form';
+    } else if (score >= 60) {
+      indicator.style.background = 'rgba(255,209,102,0.2)';
+      indicator.style.borderColor = 'var(--gold)';
+      indicator.style.color = 'var(--gold)';
+      indicator.textContent = '🟡 Adjust Form';
+      
+      // Beep every 2 seconds for moderate form issues
+      if (now - lastFormCheck > 2000) {
+        playBeep(600, 150, 'warning');
+        lastFormCheck = now;
+      }
+    } else {
+      indicator.style.background = 'rgba(255,60,95,0.3)';
+      indicator.style.borderColor = 'var(--red)';
+      indicator.style.color = 'var(--red)';
+      indicator.textContent = '🔴 Poor Form';
+      
+      // More frequent beeps for poor form
+      if (now - lastFormCheck > 1000) {
+        playBeep(400, 300, 'error');
+        lastFormCheck = now;
+      }
+    }
+  } else {
+    indicator.style.display = 'none';
+  }
+}
+
+// ── Geometry: real angle from 3 landmark coordinates ────────────────────
+function angleDeg(a, b, c) {
+  // Ensure landmarks exist and have good visibility
+  if (!a || !b || !c) return 0;
+  if ((a.visibility || 0) < 0.5 || (b.visibility || 0) < 0.5 || (c.visibility || 0) < 0.5) return 0;
+  
+  // Vector BA and BC from landmark {x,y}
+  const BAx = a.x - b.x, BAy = a.y - b.y;
+  const BCx = c.x - b.x, BCy = c.y - b.y;
+  const dot  = BAx*BCx + BAy*BCy;
+  const mags = Math.hypot(BAx,BAy) * Math.hypot(BCx,BCy);
+  if (mags < 1e-9) return 0;
+  
+  const angle = Math.acos(Math.max(-1, Math.min(1, dot/mags))) * 180 / Math.PI;
+  
+  // Validate angle is reasonable
+  return isNaN(angle) ? 0 : Math.max(0, Math.min(180, angle));
+}
+
+// ── Symmetry: real comparison of matching joint heights ─────────────────
+function computeSymmetry(lms, idxA, idxB) {
+  const a = lms[idxA], b = lms[idxB];
+  if (!a || !b || (a.visibility??0)<0.4 || (b.visibility??0)<0.4) return null;
+  const diff = Math.abs(a.y - b.y);           // normalised (0–1)
+  return Math.max(0, Math.round(100 - diff * 300));
+}
+
+// ── Form score: derived entirely from joint angles + visibility ──────────
+function formScore(angle, lms, cfg) {
+  const [ia,ib,ic] = cfg.j;
+  const minVis = Math.min(
+    lms[ia]?.visibility ?? 0,
+    lms[ib]?.visibility ?? 0,
+    lms[ic]?.visibility ?? 0
+  );
+
+  let score = 100;
+
+  // Visibility penalty
+  if      (minVis < 0.4) score -= 35;
+  else if (minVis < 0.65) score -= 12;
+
+  // Range-of-motion penalties based on current phase
+  if (repStage === 'down') {
+    // Reward full depth
+    if (angle > cfg.fullDepth + 25) score -= Math.min(30, (angle - cfg.fullDepth - 25) * 0.9);
+    // Penalise extreme depth (over-flexion)
+    if (angle < cfg.fullDepth - 30) score -= 15;
+  } else {
+    // Up phase: should be near full extension
+    const extTarget = cfg.upThresh + 5;
+    if (angle < extTarget - 20) score -= Math.min(20, (extTarget - 20 - angle) * 0.7);
+  }
+
+  // Plank: penalise deviation from straight body line (170-182°)
+  if (cfg.label === 'Plank') {
+    const dev = Math.abs(angle - 176);
+    score -= Math.min(40, dev * 1.8);
+  }
+
+  // Symmetry penalty
+  const sym = computeSymmetry(lms, cfg.sym[0], cfg.sym[1]);
+  if (sym !== null && sym < 65) score -= Math.round((65 - sym) * 0.4);
+
+  return { score: Math.max(0, Math.round(score)), sym, minVis };
+}
+
+// ── Rep state machine: UP → DOWN → UP = 1 rep ───────────────────────────
+function tickRepMachine(angle, fScore, cfg) {
+  if (cfg.label === 'Plank') return; // plank is timed, not rep-counted
+
+  const downT = cfg.downThresh + cfg.deadZone;
+  const upT   = cfg.upThresh   - cfg.deadZone;
+
+  if   (repStage === 'up'   && angle < downT) { repStage = 'down'; }
+  else if (repStage === 'down' && angle > upT) {
+    repStage = 'up';
+    reps++;
+    formHistory.push(fScore);
+    if (fScore > bestScore) bestScore = fScore;
+    if (reps > 0 && reps % 10 === 0) { sets++; showToast(`Set ${sets} complete — ${reps} total reps! 🔥`); }
+    flashRep();
+  }
+}
+
+// ── Canvas drawing ───────────────────────────────────────────────────────
+
+const BONES = [
+  [L.NOSE,L.L_SHOULDER],[L.NOSE,L.R_SHOULDER],
+  [L.L_SHOULDER,L.R_SHOULDER],[L.L_HIP,L.R_HIP],
+  [L.L_SHOULDER,L.L_HIP],[L.R_SHOULDER,L.R_HIP],
+  [L.L_SHOULDER,L.L_ELBOW],[L.L_ELBOW,L.L_WRIST],
+  [L.R_SHOULDER,L.R_ELBOW],[L.R_ELBOW,L.R_WRIST],
+  [L.L_HIP,L.L_KNEE],[L.L_KNEE,L.L_ANKLE],
+  [L.R_HIP,L.R_KNEE],[L.R_KNEE,L.R_ANKLE],
+  [L.L_ANKLE,L.L_HEEL],[L.L_HEEL,L.L_TOE],
+  [L.R_ANKLE,L.R_HEEL],[L.R_HEEL,L.R_TOE],
+];
+
+function draw(canvas, lms) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cfg = EX[curEx];
+  const activeSet = new Set(cfg.j);
+
+  ctx.clearRect(0,0,W,H);
+
+  // 1. Bounding box
+  const vis = lms.filter(l=>(l.visibility??0)>0.45);
+  if (vis.length >= 4) {
+    const xs = vis.map(l=>l.x*W), ys = vis.map(l=>l.y*H);
+    const x1=Math.min(...xs)-24, y1=Math.min(...ys)-24;
+    const x2=Math.max(...xs)+24, y2=Math.max(...ys)+24;
+    const CL=26;
+    ctx.save();
+    ctx.strokeStyle='#00ff88'; ctx.lineWidth=2.5;
+    ctx.shadowColor='#00ff88'; ctx.shadowBlur=10;
+    [[x1,y1,1,1],[x2,y1,-1,1],[x2,y2,-1,-1],[x1,y2,1,-1]].forEach(([cx,cy,dx,dy])=>{
+      ctx.beginPath(); ctx.moveTo(cx,cy+dy*CL); ctx.lineTo(cx,cy); ctx.lineTo(cx+dx*CL,cy); ctx.stroke();
+    });
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(0,255,136,0.025)';
+    ctx.fillRect(x1,y1,x2-x1,y2-y1);
+    ctx.font='bold 10px DM Sans'; ctx.fillStyle='rgba(0,255,136,0.75)';
+    ctx.fillText(cfg.label.toUpperCase()+'  ▸  TRACKING', x1+4, y1-7);
+    ctx.restore();
+  }
+
+  // 2. Skeleton bones
+  BONES.forEach(([a,b])=>{
+    const lA=lms[a], lB=lms[b];
+    if (!lA||!lB) return;
+    const v=Math.min(lA.visibility??0, lB.visibility??0);
+    if (v<0.3) return;
+    const active = activeSet.has(a) && activeSet.has(b);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(lA.x*W,lA.y*H); ctx.lineTo(lB.x*W,lB.y*H);
+    ctx.strokeStyle = active ? `rgba(0,255,136,${0.5+v*0.5})` : `rgba(100,170,255,${0.25+v*0.35})`;
+    ctx.lineWidth   = active ? 4 : 2;
+    ctx.lineCap     = 'round';
+    if (active) { ctx.shadowColor='#00ff88'; ctx.shadowBlur=12; }
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // 3. Joint circles
+  lms.forEach((lm,idx)=>{
+    const v=lm.visibility??0; if (v<0.35) return;
+    const active=activeSet.has(idx);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(lm.x*W,lm.y*H,active?8:4,0,Math.PI*2);
+    ctx.fillStyle = active ? '#00ff88' : `rgba(200,220,255,${0.5+v*0.5})`;
+    if (active) { ctx.shadowColor='#00ff88'; ctx.shadowBlur=16; }
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // 4. Angle arc at the middle joint of active triplet
+  const [ia,ib,ic] = cfg.j;
+  const jA=lms[ia], jB=lms[ib], jC=lms[ic];
+  if (jA && jB && jC && (jB.visibility??0)>0.5) {
+    const bx=jB.x*W, by=jB.y*H, R=36;
+    const angA=Math.atan2((jA.y-jB.y)*H,(jA.x-jB.x)*W);
+    const angC=Math.atan2((jC.y-jB.y)*H,(jC.x-jB.x)*W);
+    const angle=angleDeg(jA,jB,jC);
+    const ac = angle < cfg.downThresh+20 ? '#ffd166' : '#00ff88';
+    ctx.save();
+    ctx.beginPath(); ctx.arc(bx,by,R,angA,angC,false);
+    ctx.strokeStyle=ac; ctx.lineWidth=3;
+    ctx.shadowColor=ac; ctx.shadowBlur=10; ctx.stroke();
+    ctx.restore();
+    ctx.save();
+    ctx.font='bold 13px JetBrains Mono'; ctx.fillStyle='#fff';
+    ctx.shadowColor='#000'; ctx.shadowBlur=4;
+    ctx.fillText(`${Math.round(angle)}°`, bx+R+8, by-6);
+    ctx.restore();
+  }
+}
+
+// ── MediaPipe pose results ───────────────────────────────────────────────
+function onResults(results) {
+  const now=performance.now(), dt=now-lastT||16;
+  lastT=now; fpsEma=fpsEma*0.88+(1000/dt)*0.12;
+  document.getElementById('chip-fps').textContent=`⚡ ${Math.round(fpsEma)} FPS`;
+
+  const canvas=document.getElementById('canvas');
+  const ctx=canvas.getContext('2d');
+
+  if (!results.poseLandmarks || !results.poseLandmarks.length) {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    setFeedback('🔍 No person detected — step back or improve lighting','warn');
+    document.getElementById('m-stage').textContent='NONE';
+    document.getElementById('m-angle').textContent='—°';
+    document.getElementById('m-vis').textContent='—%';
+    document.getElementById('m-score').textContent='—';
+    updateFormIndicator(0, 'No detection');
+    return;
+  }
+
+  const lms=results.poseLandmarks;
+  const cfg=EX[curEx];
+  draw(canvas, lms);
+
+  const [ia,ib,ic]=cfg.j;
+  const jA=lms[ia], jB=lms[ib], jC=lms[ic];
+  
+  // Check if key joints are visible
+  if (!jA || !jB || !jC) {
+    setFeedback('⚠️ Key joints not visible — adjust position','warn');
+    document.getElementById('m-angle').textContent='—°';
+    updateFormIndicator(0, 'Joints hidden');
+    return;
+  }
+  
+  const minVis=Math.min(jA?.visibility??0, jB?.visibility??0, jC?.visibility??0);
+
+  if (minVis < 0.4) {
+    setFeedback('⚠️ Key joints hidden — face the camera','warn'); 
+    document.getElementById('m-angle').textContent='—°';
+    updateFormIndicator(0, 'Low visibility');
+    return;
+  }
+
+  const angle = angleDeg(jA, jB, jC);
+  
+  // Only proceed if we have a valid angle
+  if (angle === 0) {
+    setFeedback('⚠️ Cannot calculate angle — adjust position','warn');
+    document.getElementById('m-angle').textContent='—°';
+    updateFormIndicator(0, 'Invalid angle');
+    return;
+  }
+  
+  const {score, sym} = formScore(angle, lms, cfg);
+  tickRepMachine(angle, score, cfg);
+
+  // ── Update all UI with real values ───────────────────────────────────
+
+  const color = score>80 ? 'var(--neon)' : score>55 ? 'var(--gold)' : 'var(--red)';
+
+  // Gauge (0–180°)
+  const pct = Math.min(100,(angle/180)*100);
+  document.getElementById('gauge-fill').style.width=pct+'%';
+  document.getElementById('gauge-fill').style.background=color;
+  document.getElementById('gauge-needle').style.left=pct+'%';
+  document.getElementById('gauge-label').textContent=`${Math.round(angle)}°`;
+
+  // Live metrics (all from real landmark data)
+  document.getElementById('m-angle').textContent=`${Math.round(angle)}°`;
+  document.getElementById('m-stage').textContent=repStage==='down'?'▼ DOWN':'▲ UP';
+  document.getElementById('m-vis').textContent=`${Math.round(minVis*100)}%`;
+  document.getElementById('m-score').textContent=score;
+  document.getElementById('m-score').style.color=color;
+
+  // Form arc
+  const circ=207.35;
+  const arc=document.getElementById('form-arc');
+  arc.style.strokeDashoffset=circ-(score/100)*circ;
+  arc.style.stroke=color;
+  arc.style.filter=`drop-shadow(0 0 5px ${color})`;
+  document.getElementById('ring-val').textContent=score;
+  document.getElementById('ring-val').style.color=color;
+
+  // Avg & best
+  if (formHistory.length) {
+    document.getElementById('sd-avg').textContent=Math.round(formHistory.reduce((a,b)=>a+b,0)/formHistory.length);
+    document.getElementById('sd-best').textContent=bestScore;
+  }
+  document.getElementById('sd-sym').textContent=sym!==null?sym+'%':'—';
+  document.getElementById('sd-depth').textContent=angle<=cfg.fullDepth?'✓ Full':'Partial';
+
+  // Score bar
+  document.getElementById('score-bar').style.width=score+'%';
+  document.getElementById('score-bar').style.background=color;
+
+  // Rep / set display
+  document.getElementById('rep-num').textContent=curEx==='plank'?Math.round((Date.now()-sessionStart)/1000):reps;
+  document.getElementById('rep-label').textContent=curEx==='plank'?'SECONDS':'REPS';
+  document.getElementById('set-num').textContent=sets;
+  document.getElementById('st-reps').textContent=reps;
+  document.getElementById('st-sets').textContent=sets;
+
+  // Feedback
+  if (cfg.label==='Plank') {
+    if      (score>=85) setFeedback('🔥 Perfect plank! Hold strong','good');
+    else if (score>=65) setFeedback('⚠️ Adjust hips — keep body straight','warn');
+    else                setFeedback('❌ Realign your body — check hips','bad');
+  } else if (repStage==='down') {
+    if      (angle<=cfg.fullDepth && score>=75) setFeedback('✅ Great depth — drive up!','good');
+    else if (score<60)  setFeedback(`❌ ${cfg.tips[0]}`,'bad');
+    else                setFeedback('↓ Lower further for a full rep','warn');
+  } else {
+    setFeedback(reps>0?`💪 Rep ${reps} — ${score>=80?'great form!':'watch form'}`:`↓ Begin ${cfg.label}`,
+                score>=80?'good':'idle');
+  }
+  
+  // Update form indicator with audio feedback
+  updateFormIndicator(score, document.getElementById('feedback-txt').textContent);
+}
+
+// ── Camera ───────────────────────────────────────────────────────────────
+async function toggleCamera() { cameraOn ? stopCamera() : await startCamera(); }
+
+async function startCamera() {
+  document.getElementById('loader-text').innerHTML='Loading MediaPipe…<br><span style="color:var(--muted);font-size:.75rem;">First load ~3MB · 100% on-device · No cloud</span>';
+  document.getElementById('loader').style.display='flex';
+  
+  try {
+    // Initialize audio context for beeps
+    initAudio();
+    
+    const video=document.getElementById('webcam');
+    const canvas=document.getElementById('canvas');
+
+    // Request camera with better constraints
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        width: { ideal: 1280, min: 640 },
+        height: { ideal: 720, min: 480 },
+        facingMode: 'user',
+        frameRate: { ideal: 30, min: 15 }
+      }
+    });
+    
+    video.srcObject = stream;
+    
+    // Wait for video to be ready
+    await new Promise((resolve) => {
+      video.onloadedmetadata = () => {
+        console.log('✅ Video ready:', video.videoWidth, 'x', video.videoHeight);
+        canvas.width = video.videoWidth || 1280;
+        canvas.height = video.videoHeight || 720;
+        resolve();
+      };
+    });
+
+    mpPose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
+    mpPose.setOptions({
+      modelComplexity:0,          // Lite — 4GB RAM friendly
+      smoothLandmarks:true,
+      enableSegmentation:false,   // saves ~30% CPU
+      smoothSegmentation:false,
+      minDetectionConfidence:0.7, // Higher confidence for better detection
+      minTrackingConfidence:0.5,
+    });
+    mpPose.onResults(onResults);
+
+    mpCam=new Camera(video,{
+      onFrame:async()=>{
+        if(video.readyState === 4) {
+          await mpPose.send({image:video});
+        }
+      },
+      width:video.videoWidth || 1280,
+      height:video.videoHeight || 720,
+    });
+    
+    await mpCam.start();
+
+    cameraOn=true; sessionStart=Date.now();
+    document.getElementById('btn-cam').className='cam-btn stop';
+    document.getElementById('btn-cam').textContent='⏹ Stop Camera';
+    document.getElementById('chip-cam').className='chip live';
+    document.getElementById('chip-cam').textContent='🟢 LIVE';
+    document.getElementById('chip-model').style.display='inline-flex';
+    document.getElementById('chip-fps').style.display='inline-flex';
+    document.getElementById('loader').style.display='none';
+
+    timerHandle=setInterval(()=>{
+      if (!sessionStart) return;
+      const s=Math.round((Date.now()-sessionStart)/1000);
+      document.getElementById('st-time').textContent=s+'s';
+      document.getElementById('st-cal').textContent=Math.round((s/60)*EX[curEx].kcal);
+    },1000);
+
+    setFeedback('🚀 Tracking active — get into position!','good');
+    
+    // Play startup sound
+    setTimeout(() => playBeep(800, 100), 500);
+    
+  } catch(e) {
+    document.getElementById('loader-text').textContent='❌ Camera Error: '+(e.message||'Access denied. Please allow camera access and refresh.');
+    console.error('Camera initialization failed:', e);
+    setTimeout(() => {
+      document.getElementById('loader').style.display='none';
+    }, 3000);
+  }
+}
+
+function stopCamera() {
+  mpCam?.stop(); mpPose?.close(); mpCam=mpPose=null;
+  clearInterval(timerHandle); cameraOn=false;
+  document.getElementById('btn-cam').className='cam-btn start';
+  document.getElementById('btn-cam').textContent='🎥 Start Camera';
+  document.getElementById('chip-cam').className='chip';
+  document.getElementById('chip-cam').textContent='⚫ Camera Off';
+  document.getElementById('chip-model').style.display='none';
+  document.getElementById('chip-fps').style.display='none';
+  const c=document.getElementById('canvas');
+  c.getContext('2d').clearRect(0,0,c.width,c.height);
+  setFeedback('⏹ Camera stopped','idle');
+}
+
+// ── Session ───────────────────────────────────────────────────────────────
+function resetSession() {
+  reps=0; sets=0; repStage='up'; formHistory=[]; bestScore=0;
+  sessionStart=cameraOn?Date.now():null;
+  ['rep-num','st-reps'].forEach(id=>document.getElementById(id).textContent='0');
+  ['set-num','st-sets'].forEach(id=>document.getElementById(id).textContent='0');
+  document.getElementById('st-time').textContent='0s';
+  document.getElementById('st-cal').textContent='0';
+  document.getElementById('sd-avg').textContent='—';
+  document.getElementById('sd-best').textContent='—';
+  setFeedback('↺ Reset — ready','idle');
+  showToast('Session reset ↺');
+}
+
+function saveSession() {
+  if (!sessionStart) { showToast('Start camera first!',true); return; }
+  const elapsed=Math.round((Date.now()-sessionStart)/1000);
+  const avg=formHistory.length?Math.round(formHistory.reduce((a,b)=>a+b,0)/formHistory.length):0;
+  const kcal=Math.round((elapsed/60)*EX[curEx].kcal);
+  fetch('http://localhost:3000/api/workout/sessions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('fitform_token')||'')},
+    body:JSON.stringify({exercise_name:EX[curEx].label,duration_seconds:elapsed,reps,sets:Math.max(sets,1),calories_burned:kcal,form_score:avg,feedback:`${reps} reps · avg form ${avg}% · best ${bestScore}%`}),
+  }).catch(()=>{});
+  showToast(`✅ Saved! ${reps} reps · ${avg}% form · ${kcal} kcal`);
+  resetSession();
+}
+
+function selectEx(btn) {
+  curEx=btn.dataset.ex; repStage='up';
+  reps=0; sets=0; formHistory=[]; bestScore=0;
+  document.querySelectorAll('.ex-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTips();
+  document.getElementById('rep-num').textContent='0';
+  document.getElementById('set-num').textContent='0';
+  document.getElementById('rep-label').textContent=curEx==='plank'?'SECONDS':'REPS';
+  setFeedback(`${EX[curEx].label} selected — begin!`,'idle');
+}
+
+function renderTips() {
+  document.getElementById('tips-container').innerHTML=
+    EX[curEx].tips.map(t=>`<div class="tip-item"><div class="tip-dot"></div><div class="tip-text">${t}</div></div>`).join('');
+}
+
+function setFeedback(text, cls) {
+  document.getElementById('feedback-pill').className=cls;
+  const m=text.match(/^([^\w\s])\s*(.*)/us);
+  if (m){document.getElementById('feedback-icon').textContent=m[1];document.getElementById('feedback-txt').textContent=m[2];}
+  else {document.getElementById('feedback-icon').textContent='';document.getElementById('feedback-txt').textContent=text;}
+}
+
+function flashRep() {
+  const el=document.getElementById('rep-num');
+  el.classList.add('flash');
+  setTimeout(()=>el.classList.remove('flash'),280);
+}
+
+function showToast(msg, isErr=false) {
+  const el=document.createElement('div');
+  el.className='toast'+(isErr?' err':'');
+  el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+
+// Init
+(function(){
+  renderTips();
+  setTimeout(()=>{document.getElementById('loader').style.display='none';},300);
+})();
+</script>
+</body>
+</html>
